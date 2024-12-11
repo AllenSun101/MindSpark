@@ -6,6 +6,7 @@ import { useState } from "react";
 export default function CreateCourse(){
     const [status, setStatus] = useState("Initial");
     const [followUpQs, setFollowUpQs] = useState([]);
+    const [prompt, setPrompt] = useState("");
 
     // displays fields- just text option for now
     function HandleInitialQuestions(event){
@@ -21,13 +22,13 @@ export default function CreateCourse(){
         })
         .then(response => {
             console.log(response.data);
-            setFollowUpQs(response.data);
+            setPrompt(response.data.prompt);
+            setFollowUpQs(response.data.response);
+            setStatus("Follow-Up");
         })
         .catch(error => {
             console.log(error);
         })
-
-        setStatus("Follow-Up");
     }
 
     function InitialQuestions(){
@@ -54,8 +55,31 @@ export default function CreateCourse(){
     }
 
     function HandleFollowUpQuestions(event){
-        // axios
         // course created, with button to access
+        // backend returns prompt v1
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const answers = Object.fromEntries(formData.entries());
+
+        const questionAnswerMap = followUpQs.reduce((acc, question, index) => {
+            acc[question] = answers[index] || ''; // Use answers[index] or fallback to ''
+            return acc;
+          }, {});
+
+        console.log(questionAnswerMap)
+
+        axios.post("http://localhost:3001/create_course", {
+            previous_prompt: prompt,
+            //questions: questions,
+        })
+        .then(response => {
+            setStatus("Done");
+        })
+        .catch(error => {
+            console.log(error);
+        })
     }
 
     function FollowUpQuestions(){
@@ -80,7 +104,8 @@ export default function CreateCourse(){
     function FinishCreating(){
         return(
             <div>
-
+                <p>Successfully created your course!</p>
+                <button>Go to Course</button>
             </div>
         )
     }
