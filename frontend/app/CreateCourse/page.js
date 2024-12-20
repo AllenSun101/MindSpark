@@ -68,11 +68,9 @@ export default function CreateCourse(){
             return acc;
           }, {});
 
-        console.log(questionAnswerMap)
-
         axios.post("http://localhost:3001/create_course", {
             previous_prompt: prompt,
-            //questions: questions,
+            questions: questionAnswerMap,
         })
         .then(response => {
             setStatus("Done");
