@@ -49,7 +49,9 @@ router.post('/follow_ups', async function(req, res, next) {
     `following requests, if any. Learning Style: ${req.body.learningStyle}. Content Format: ${req.body.contentFormat}. ` +
     `Included Topics: ${req.body.includedTopics}. Logistics: ${req.body.courseLogistics}. Additional requests: ` +
     `${req.body.otherRequests}. What follow-up questions would you ask to generate a robust personalized course?` +
-    `Only generate questions that will actually help, but generate as many as you need to.`;
+    `Only generate questions that will actually help, but generate as many as you need to.` +
+    `Do not ask about deadlines. At the moment, you don't have audio or visual content support. You also` + 
+    `cannot do peer or interactive activities.`;
 
   const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -95,14 +97,15 @@ router.post('/follow_ups', async function(req, res, next) {
 /* POST create course and topics list. */
 router.post('/create_course', async function(req, res, next) {
   console.log(req.body);
-  const basicPrompt = req.body.previous_prompt + 
-  "Additionally, here are some questions and answers. Consider the answers when given.";
+  var basicPrompt = req.body.previous_prompt + 
+  "At the moment, you don't have audio or visual content support. You also cannot do peer or interactive" + 
+  "activities. Additionally, here are some questions and answers. Consider the answers if given.";
   
   const addedQs = req.body.questions;
   
-  addedQs.forEach(element => {
-    basicPrompt += `${element[0]}: ${element[1]}`
-  });
+  for (const key in addedQs) {
+    basicPrompt += `${key}: ${addedQs[key]}`;
+  }
 
   const outlinePrompt = "Generate an outline " + basicPrompt;
 
@@ -149,12 +152,32 @@ router.post('/create_course', async function(req, res, next) {
 
   const outline = JSON.parse(completion.choices[0].message.content);
   console.log(outline);
+
+  const dbName = "MindSpark";
+  const collectionName = "Courses";
+
   // create course document
   try{
+    const newDocument = {
+      name: 'Brendon Urie',
+      account_id: 0,
+      course_name: "Fix this and persist name from original input",
+      generating_prompt: basicPrompt,
+      course_outline: outline,
+    };
 
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+    const result = await collection.insertOne(newDocument);
+    console.log('Document inserted with _id:', result.insertedId);
   }
   catch{
-
+    console.error('Error inserting document:', error);
+  }
+  finally {
+    // Close the connection
+    await client.close();
   }
 
   // add course content to database- segmented by for each outline?
