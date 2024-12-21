@@ -78,7 +78,7 @@ export default function Footer(){
                     </div>
                     <div>
                     <p className="font-medium">
-                        Additional Information
+                        Additional
                     </p>
                     <nav className="flex flex-col mt-4 space-y-2 text-sm text-gray-500">
                         <Link className="hover:opacity-75" href = "/" > Update Log </Link>
