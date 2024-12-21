@@ -48,10 +48,10 @@ router.post('/follow_ups', async function(req, res, next) {
   const prompt = `You are making an outline of topics for a course on ${req.body.courseName} while considering the ` +
     `following requests, if any. Learning Style: ${req.body.learningStyle}. Content Format: ${req.body.contentFormat}. ` +
     `Included Topics: ${req.body.includedTopics}. Logistics: ${req.body.courseLogistics}. Additional requests: ` +
-    `${req.body.otherRequests}. What follow-up questions would you ask to generate a robust personalized course?` +
+    `${req.body.otherRequests}. What follow-up questions would you ask to generate a robust personalized course? ` +
     `Only generate questions that will actually help, but generate as many as you need to.` +
-    `Do not ask about deadlines. At the moment, you don't have audio or visual content support. You also` + 
-    `cannot do peer or interactive activities.`;
+    `Do not ask about deadlines or future content releases. At the moment, you don't have audio or visual content support. ` + 
+    `You also cannot do peer or interactive activities.`;
 
   const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -97,11 +97,12 @@ router.post('/follow_ups', async function(req, res, next) {
 /* POST create course and topics list. */
 router.post('/create_course', async function(req, res, next) {
   console.log(req.body);
-  var basicPrompt = req.body.previous_prompt + 
+  var basicPrompt = req.body.previousPrompt + 
   "At the moment, you don't have audio or visual content support. You also cannot do peer or interactive" + 
-  "activities. Additionally, here are some questions and answers. Consider the answers if given.";
+  "activities. Additionally, here are some clarifying questions and answers. Consider the answers if given.";
   
   const addedQs = req.body.questions;
+  const courseName = req.body.courseName;
   
   for (const key in addedQs) {
     basicPrompt += `${key}: ${addedQs[key]}`;
@@ -153,36 +154,96 @@ router.post('/create_course', async function(req, res, next) {
   const outline = JSON.parse(completion.choices[0].message.content);
   console.log(outline);
 
+  var content = [];
+
+  for(const unit of outline.outline){
+    const topic = unit.topic;
+    const subtopics = unit.subtopics;
+
+    const topicPrompt = `Generate content for the topic ${topic} and each of the subtopics ${subtopics}.` + 
+    `This is ${basicPrompt}. Also keep in mind the content already generated and avoid redundancy: ${content}`;
+    
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+          { role: "system", content: "You are creating intuitive and engaging course content." },
+          {
+              role: "user",
+              content: topicPrompt,
+          }
+      ],
+      n: 1,
+      response_format: {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "response_schema",
+          "schema": {
+            "type": "object",
+              "properties": {
+                "topic": {
+                  "type": "object",
+                    "properties": {
+                      "topic_name": { "type": "string" },
+                      "topic_content": { "type": "string" },
+                      },
+                      "required": ["topic_name", "topic_content"]
+                },
+                "subtopics": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subtopic_name": { "type": "string" },
+                        "subtopic_content": { "type": "string" },
+                      },
+                      "required": ["subtopic_name", "subtopic_content"]
+                    }
+                }
+              },
+              required: ["topic", "subtopics"],
+            "additionalProperties": false,
+          }
+        }
+      }
+    });
+
+    const topicContent = JSON.parse(completion.choices[0].message.content);
+    content.push(topicContent);
+    console.log("YEET");
+  }
+
   const dbName = "MindSpark";
   const collectionName = "Courses";
 
   // create course document
+  var status = "Success";
   try{
     const newDocument = {
-      name: 'Brendon Urie',
+      name: 'Brendon Urie', // get from login state
       account_id: 0,
-      course_name: "Fix this and persist name from original input",
+      course_name: courseName,
       generating_prompt: basicPrompt,
       course_outline: outline,
+      course_content: content,
     };
 
     await client.connect();
     const database = client.db(dbName);
     const collection = database.collection(collectionName);
     const result = await collection.insertOne(newDocument);
+
     console.log('Document inserted with _id:', result.insertedId);
   }
   catch{
     console.error('Error inserting document:', error);
+    status = "Fail"
   }
   finally {
     // Close the connection
     await client.close();
   }
 
-  // add course content to database- segmented by for each outline?
-  const contentPrompt = "Generate content " + basicPrompt + "Use the following outline to structure content: "
-  // add outline
+  res.json( {"message": status} );
 });
 
 

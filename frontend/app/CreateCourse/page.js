@@ -7,10 +7,14 @@ export default function CreateCourse(){
     const [status, setStatus] = useState("Initial");
     const [followUpQs, setFollowUpQs] = useState([]);
     const [prompt, setPrompt] = useState("");
+    const [courseName, setCourseName] = useState("");
+    const [generateStatus, setGenerateStatus] = useState("");
 
     // displays fields- just text option for now
     function HandleInitialQuestions(event){
         event.preventDefault();
+
+        setCourseName(event.target.courseName.value);
 
         axios.post("http://localhost:3001/follow_ups", {
             courseName: event.target.courseName.value,
@@ -69,11 +73,13 @@ export default function CreateCourse(){
           }, {});
 
         axios.post("http://localhost:3001/create_course", {
-            previous_prompt: prompt,
+            previousPrompt: prompt,
             questions: questionAnswerMap,
+            courseName: courseName,
         })
         .then(response => {
             setStatus("Done");
+            setGenerateStatus(response.data.message);
         })
         .catch(error => {
             console.log(error);
@@ -102,6 +108,7 @@ export default function CreateCourse(){
     function FinishCreating(){
         return(
             <div>
+                <p>{generateStatus}</p>
                 <p>Successfully created your course!</p>
                 <button>Go to Course</button>
             </div>
