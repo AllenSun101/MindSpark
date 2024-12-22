@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from "react";
-import Link from "next/link";
 
 export default function CourseHomePage(){
 
@@ -43,7 +42,7 @@ export default function CourseHomePage(){
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[selectedTopic].subtopics[id].status === "complete" ? "green" : "gray"}`} className="w-3 h-3">
                             <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
                         </svg>
-                        <Link href="/">{topics[selectedTopic].subtopics[id].title}</Link>
+                        <a href="/">{topics[selectedTopic].subtopics[id].title}</a>
                     </div>
                 ))}
             </div>
