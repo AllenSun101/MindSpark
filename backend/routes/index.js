@@ -43,12 +43,34 @@ router.get('/', function(req, res, next) {
 router.post('/follow_ups', async function(req, res, next) {
   console.log(req.body);
 
-  // None if not given?
+  var emptyFields = [];
+  var fields = {
+    "Learning Style": req.body.learningStyle,
+    "Content Format": req.body.contentFormat,
+    "Included Topics": req.body.includedTopics,
+    "Logistics": req.body.courseLogistics,
+    "Other Requests": req.body.otherRequests,
+  }
 
-  const prompt = `You are making an outline of topics for a course on ${req.body.courseName} while considering the ` +
-    `following requests, if any. Learning Style: ${req.body.learningStyle}. Content Format: ${req.body.contentFormat}. ` +
-    `Included Topics: ${req.body.includedTopics}. Logistics: ${req.body.courseLogistics}. Additional requests: ` +
-    `${req.body.otherRequests}. What follow-up questions would you ask to generate a robust personalized course? ` +
+  var prompt = `You are making an outline of topics for a course on ${req.body.courseName} while considering the ` +
+    `following requests, if any. `;
+
+  var promptTemplate = `for a course on ${req.body.courseName} while considering the ` +
+    `following requests, if any. `;
+
+  for(const key in fields){
+    if(fields[key] == ""){
+      if(key != "Other Requests"){
+        emptyFields.push(key);
+      }
+    }
+    else{
+      prompt += `${key}: ${fields[key]}. `;
+      promptTemplate += `${key}: ${fields[key]}. `;
+    }
+  }
+    
+  prompt += `These request fields are empty: ${emptyFields} What follow-up questions would you ask to generate a robust personalized course? ` +
     `Only generate questions that will actually help, but generate as many as you need to.` +
     `Do not ask about deadlines or future content releases. At the moment, you don't have audio or visual content support. ` + 
     `You also cannot do peer or interactive activities.`;
@@ -84,11 +106,6 @@ router.post('/follow_ups', async function(req, res, next) {
       }
   });
 
-  const promptTemplate = `for a course on ${req.body.courseName} while considering the ` +
-    `following requests, if any. Learning Style: ${req.body.learningStyle}. Content Format: ${req.body.contentFormat}. ` +
-    `Included Topics: ${req.body.includedTopics}. Logistics: ${req.body.courseLogistics}. Additional requests: ` +
-    `${req.body.otherRequests}.`
-
   const response = JSON.parse(completion.choices[0].message.content);
   res.json( {prompt: promptTemplate, response: response["questions"]} );
 });
@@ -98,8 +115,8 @@ router.post('/follow_ups', async function(req, res, next) {
 router.post('/create_course', async function(req, res, next) {
   console.log(req.body);
   var basicPrompt = req.body.previousPrompt + 
-  "At the moment, you don't have audio or visual content support. You also cannot do peer or interactive" + 
-  "activities. Additionally, here are some clarifying questions and answers. Consider the answers if given.";
+  "At the moment, you don't have audio or visual content support. You also cannot do peer or interactive " + 
+  "activities. Additionally, here are some clarifying questions and answers. Consider the answers if given. ";
   
   const addedQs = req.body.questions;
   const courseName = req.body.courseName;
@@ -107,7 +124,9 @@ router.post('/create_course', async function(req, res, next) {
   const name = req.body.name;
   
   for (const key in addedQs) {
-    basicPrompt += `${key}: ${addedQs[key]}`;
+    if(addedQs[key] != ""){
+      basicPrompt += `${key}: ${addedQs[key]} `;
+    }
   }
 
   const outlinePrompt = "Generate an outline " + basicPrompt + "Ensure that topics and subtopics would have " +
