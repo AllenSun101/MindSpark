@@ -103,12 +103,15 @@ router.post('/create_course', async function(req, res, next) {
   
   const addedQs = req.body.questions;
   const courseName = req.body.courseName;
+  const email = req.body.email;
+  const name = req.body.name;
   
   for (const key in addedQs) {
     basicPrompt += `${key}: ${addedQs[key]}`;
   }
 
-  const outlinePrompt = "Generate an outline " + basicPrompt;
+  const outlinePrompt = "Generate an outline " + basicPrompt + "Ensure that topics and subtopics would have " +
+  "substantial enough information.";
 
   console.log(outlinePrompt);
 
@@ -219,8 +222,8 @@ router.post('/create_course', async function(req, res, next) {
   var status = "Success";
   try{
     const newDocument = {
-      name: 'Brendon Urie', // get from login state
-      account_id: 0,
+      email: email,
+      name: name,
       course_name: courseName,
       generating_prompt: basicPrompt,
       course_outline: outline,
@@ -232,9 +235,61 @@ router.post('/create_course', async function(req, res, next) {
     const collection = database.collection(collectionName);
     const result = await collection.insertOne(newDocument);
 
+    const insertedId = result.insertedId;
+
+    // insert a course reference into user document
+    const userCollectionName = "Users"
+    const userCollection = database.collection(userCollectionName);
+    
+    const userRecord = await userCollection.findOne({ email: email });
+    if(!userRecord){
+      status = await CreateUserDocument(email, name);
+    }
+    
+    const filter = { email: email };
+    const update = { $push: { courses: {id: insertedId, name: courseName} } };
+
+    const updateReferenceResult = await userCollection.findOneAndUpdate(
+      filter,
+      update,
+      { returnDocument: "after" } // Return the updated document
+    );
+    
     console.log('Document inserted with _id:', result.insertedId);
   }
-  catch{
+  catch(error){
+    console.error('Error inserting document:', error);
+    status = "Fail";
+  }
+  finally {
+    // Close the connection
+    await client.close();
+  }
+
+  res.json( {"message": status} );
+});
+
+
+async function CreateUserDocument(email, name){
+  const dbName = "MindSpark";
+  const collectionName = "Users";
+  var status = "Success";
+
+  try{
+    const newDocument = {
+      email: email,
+      name: name,
+      courses: [],
+    };
+
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+    const result = await collection.insertOne(newDocument);
+
+    console.log('Document inserted with _id:', result.insertedId);
+  }
+  catch(error){
     console.error('Error inserting document:', error);
     status = "Fail"
   }
@@ -243,7 +298,46 @@ router.post('/create_course', async function(req, res, next) {
     await client.close();
   }
 
-  res.json( {"message": status} );
+  return status;
+}
+
+
+/* GET user courses, create user document if none. */
+router.get('/get_courses', async function(req, res, next) {
+  // fetch user courses, and create user document if it does not exist
+  const dbName = "MindSpark";
+  const collectionName = "Users";
+  var status = "Success";
+
+  const email = req.query.email;
+  const name = req.query.name;
+
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+
+    const record = await collection.findOne({ email: email });
+
+    var courses = [];
+    var status = "Success";
+
+    if (record) {
+      courses = record.courses;
+    } else {
+      status = await CreateUserDocument(email, name);
+    }
+  } 
+  catch(error){
+    console.error('Error fetching courses:', error);
+    status = "Fail"
+  }
+  finally {
+    await client.close();
+  }
+
+  res.json( {courses: courses, status: status} );
+
 });
 
 

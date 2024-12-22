@@ -1,7 +1,29 @@
+import axios from "axios";
+import { auth } from "../auth"
 
-export default function MyCourses(){
+export default async function MyCourses(){
 
-    var user = "Bento Sun";
+    const session = await auth()
+
+    if(!session?.user){
+        return(
+            <div>
+                <p>Sign In First!</p>
+            </div>
+        )
+    }
+
+    // fetch user courses from database
+    const { data } = await axios.get("http://localhost:3001/get_courses", {
+        params: {
+            email: session.user.email,
+            name: session.user.name,
+        }
+    })
+
+    console.log(data);
+
+    var user = session.user.name;
 
     const cards = [
         { id: 1, title: 'Card 1', description: 'Description for card 1' },
@@ -13,7 +35,7 @@ export default function MyCourses(){
     ];
 
     return (
-        <div className="container mx-auto px-8 lg:px-16 py-24">
+        <div className="container mx-auto px-8 lg:px-16 py-12">
             <h1 className="text-center font-semibold text-3xl mb-6">{user}'s Courses</h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {cards.map((card) => (

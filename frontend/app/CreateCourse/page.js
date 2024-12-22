@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { useState } from "react";
+import { useSession } from "next-auth/react"
 
 export default function CreateCourse(){
     const [status, setStatus] = useState("Initial");
@@ -9,6 +10,15 @@ export default function CreateCourse(){
     const [prompt, setPrompt] = useState("");
     const [courseName, setCourseName] = useState("");
     const [generateStatus, setGenerateStatus] = useState("");
+    const { data: session } = useSession();
+
+    if(!session?.user){
+        return(
+            <div>
+                <p>Sign In First!</p>
+            </div>
+        )
+    }
 
     // displays fields- just text option for now
     function HandleInitialQuestions(event){
@@ -76,6 +86,8 @@ export default function CreateCourse(){
             previousPrompt: prompt,
             questions: questionAnswerMap,
             courseName: courseName,
+            email: session.user.email,
+            name: session.user.name,
         })
         .then(response => {
             setStatus("Done");
