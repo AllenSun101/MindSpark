@@ -55,7 +55,7 @@ export default async function MyCourses(){
                         <h2 className="text-lg font-semibold mb-2 text-center">{card.name}</h2>
                     </div>
                     <div className="flex flex-col justify-center items-center">
-                        <Link href={"/"}>
+                        <Link href={{ pathname: `/Course/${card.name}`, query: { course_id: card.id } }}>
                             <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">
                                 Launch Course
                             </button>

@@ -128,8 +128,8 @@ export default function CreateCourse(){
     }
 
     return (
-        <div>
-            <h1>Create a Course</h1>
+        <div className="container mx-auto px-8 lg:px-16 py-12">
+            <h1 className="text-center font-semibold text-3xl mb-6">Build a Course</h1>
             {status == "Initial" ? <InitialQuestions /> : status == "Follow-Up" ? <FollowUpQuestions /> : <FinishCreating />}
         </div>
     )
