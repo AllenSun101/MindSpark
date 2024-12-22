@@ -4,6 +4,7 @@ import { Open_Sans } from "next/font/google"
 import "./globals.css";
 import Navbar from "./Navbar"
 import Footer from "./Footer"
+import { SessionProvider } from "next-auth/react"
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,9 +34,11 @@ export default function RootLayout({
       <body
         className={`${openSans.className} ${openSans.className} antialiased`}
       >
-        <Navbar />
-        {children}
-        <Footer />
+        <SessionProvider>
+          <Navbar />
+            {children}
+          <Footer />
+        </SessionProvider>
       </body>
     </html>
   );

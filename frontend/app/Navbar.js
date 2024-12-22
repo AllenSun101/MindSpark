@@ -1,9 +1,12 @@
 'use client'
 
 import React, { useState } from "react";
+import { signIn, signOut, useSession } from "next-auth/react"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const { data: session } = useSession()
 
   const toggleMenu = () => {
       setIsMenuOpen(!isMenuOpen);
@@ -102,12 +105,18 @@ export default function Navbar() {
               </a>
           </li>
         </ul>
-        <a
-          className="hidden lg:inline-block lg:ml-auto lg:mr-3 py-2 px-6 bg-gray-200 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
-          href="#"
-          >
-          Sign In
-        </a>
+        {
+          session == undefined ? 
+            <button className="hidden lg:inline-block lg:ml-auto lg:mr-3 py-2 px-6 bg-gray-200 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200" 
+              onClick={() => signIn("google")}>
+                Sign In
+            </button>
+          :
+          <button className="hidden lg:inline-block lg:ml-auto lg:mr-3 py-2 px-6 bg-gray-200 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200" 
+            onClick={() => signOut("google")}>
+              Sign Out
+          </button>
+        }
       </nav>
       {isMenuOpen && (
         <div className="navbar-menu relative z-50">
@@ -170,12 +179,18 @@ export default function Navbar() {
                 </a>
               </li>
             </ul>
-            <a
-              className="inline-block py-2 px-6 bg-gray-100 hover:bg-gray-50 text-sm text-gray-900 font-bold rounded-xl transition duration-200"
-              href="#"
-              >
-              Sign In
-            </a>
+            {
+              session == undefined ? 
+                <button className="inline-block mr-auto ml-3 py-2 px-6 bg-gray-200 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200" 
+                  onClick={() => signIn("google")}>
+                    Sign In
+                </button>
+              :
+              <button className="inline-block mr-auto ml-3 py-2 px-6 bg-gray-200 hover:bg-gray-100 text-sm text-gray-900 font-bold rounded-xl transition duration-200" 
+                onClick={() => signOut("google")}>
+                  Sign Out
+              </button>
+            }
           </nav>
         </div>
       )}
