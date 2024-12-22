@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function CourseHomePage(){
 
@@ -13,16 +14,38 @@ export default function CourseHomePage(){
 
     //0 = incomplete, 1 = in progress, 2 = complete
     const topics = {
-        1: { title: 'Rizz', subtopics: [], status: 2 },
-        2: { title: 'Gyatt', subtopics: [], status: 2 },
-        3: { title: 'Skibidi', subtopics: [], status: 1 },
-        4: { title: 'Sigma', subtopics: [], status: 0 }
+        1: { 
+            title: 'Rizz', 
+            subtopics: {
+                1: { title: "Origins of Rizz: Gen Alpha's intriguing slang", status: "complete"},
+                2: { title: "Excercise: Applications of rizz", status: "complete"}
+            }, 
+            status: 2 
+        },
+        2: { title: 'Gyatt', subtopics: {}, status: 2 },
+        3: { title: 'Skibidi', subtopics: {}, status: 1 },
+        4: { title: 'Sigma', subtopics: {}, status: 0 }
+    }
+
+    const grades = {
+        1: { assignment: 'Rizz practical', weight: 10, grade: 89 },
+        2: { assignment: 'Rizz final exam', weight: 30, grade: 76 },
+        3: { assignment: 'Gyatt anticipation guide', weight: 30, grade: 100},
+        4: { assignment: 'Final exam', weight: 30, grade: -1 }
     }
 
     function DisplayTopic(){
         return(
             <div>
-                {topics[selectedTopic].title}
+                <h1 className="text-2xl font-semibold mb-4">{topics[selectedTopic].title}</h1>
+                {Object.keys(topics[selectedTopic].subtopics).map((id) => (
+                    <div key={id} className="flex items-center space-x-2 p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[selectedTopic].subtopics[id].status === "complete" ? "green" : "gray"}`} className="w-3 h-3">
+                            <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
+                        </svg>
+                        <Link href="/">{topics[selectedTopic].subtopics[id].title}</Link>
+                    </div>
+                ))}
             </div>
         );
     }
@@ -30,13 +53,26 @@ export default function CourseHomePage(){
     function DisplayGrades(){
         return(
             <div>
-                Grades
+                <h1 className="text-2xl font-semibold mb-4">Grades</h1>
+                <div className="flex w-full my-2">
+                    <div className="col-span-4 font-semibold" style={{ width: "70%" }}>Assignment</div>
+                    <div className="col-span-1 text-center font-semibold" style={{ width: "15%" }}>Weight</div>
+                    <div className="col-span-1 text-center font-semibold" style={{ width: "15%" }}>Grade</div>
+                </div>
+                <hr/>
+                {Object.keys(grades).map((id) => (
+                    <div key={id} className="flex w-full my-2">
+                        <div className="col-span-4" style={{ width: "70%" }}>{grades[id].assignment}</div>
+                        <div className="col-span-1 text-center" style={{ width: "15%" }}>{grades[id].weight}</div>
+                        <div className="col-span-1 text-center" style={{ width: "15%" }}>{grades[id].grade === -1 ? "---" : grades[id].grade}</div>
+                    </div>
+                ))}
             </div>
         );
     }
     
     return(
-        <div className="flex flex-row space-x-10 px-24 py-16">
+        <div className="flex flex-row space-x-20 px-24 py-16">
             <div style={{ width: "30%" }}>
                 <h1 className="text-2xl font-bold mb-4">{courseName}</h1>
                 <h2>{courseDescription}</h2>
@@ -66,7 +102,8 @@ export default function CourseHomePage(){
                     <button onClick={() => {setSelectedOption("grades"); setSelectedTopic()}} className="text-lg">Grades</button>
                 </div>
             </div>
-            <div>
+            <div className="w-1 bg-gray-500"></div>
+            <div style={{ width: "50%" }}>
                 {selectedOption === "content" ? <DisplayTopic/> : <DisplayGrades/>}
             </div>
         </div>
