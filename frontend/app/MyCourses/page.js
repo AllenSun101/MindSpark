@@ -32,9 +32,9 @@ export default async function MyCourses(){
                 <h1 className="text-center font-semibold text-3xl mb-6">{user}'s Courses</h1>
                 <div className="mt-40 mb-20 text-center">
                     <p className="mb-4">No courses currently. Create one here!</p>
-                    <Link href={"/CreateCourse"}>
+                    <Link href={"/BuildCourse"}>
                         <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">
-                            Create Course
+                            Build Course
                         </button>
                     </Link>
                 </div>

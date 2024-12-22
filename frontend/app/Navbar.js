@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react"
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,6 +12,8 @@ export default function Navbar() {
   const toggleMenu = () => {
       setIsMenuOpen(!isMenuOpen);
   };
+
+  const path = usePathname();
 
   return (
     <div className="bg-blue-500">
@@ -37,7 +40,7 @@ export default function Navbar() {
         </div>
         <ul className="hidden absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 lg:flex lg:mx-auto lg:flex lg:items-center lg:w-auto lg:space-x-6">
           <li>
-            <a className="text-sm text-gray-700" href="/MyCourses">
+            <a className={path == "/MyCourses" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/MyCourses">
               My Courses
             </a>
           </li>
@@ -58,7 +61,7 @@ export default function Navbar() {
             </svg>
           </li>
           <li>
-            <a className="text-sm text-gray-700" href="/CreateCourse">
+            <a className={path == "/BuildCourse" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/BuildCourse">
               Build Course
             </a>
           </li>
@@ -79,7 +82,7 @@ export default function Navbar() {
               </svg>
           </li>
           <li>
-            <a className="text-sm text-gray-700" href="/Profile">
+            <a className={path == "/Profile" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/Profile">
               Profile
             </a>
           </li>
@@ -100,7 +103,7 @@ export default function Navbar() {
               </svg>
           </li>
           <li>
-              <a className="text-sm text-gray-700" href="/Pricing">
+              <a className={path == "/Pricing" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/Pricing">
               Pricing
               </a>
           </li>
@@ -147,8 +150,8 @@ export default function Navbar() {
             </div>
             <ul>
               <li>
-                <a
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                <a 
+                  className= {path == "/MyCourses" ? "block px-4 py-2 hover:bg-gray-50 font-semibold text-blue-600" : "block px-4 py-2 hover:bg-gray-50 text-gray-700"}
                   href="/MyCourses"
                 >
                   My Courses
@@ -156,15 +159,15 @@ export default function Navbar() {
               </li>
               <li>
                 <a
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                  href="/CreateCourse"
+                  className={path == "/BuildCourse" ? "block px-4 py-2 hover:bg-gray-50 font-semibold text-blue-600" : "block px-4 py-2 hover:bg-gray-50 text-gray-700"}
+                  href="/BuildCourse"
                 >
                   Build Course
                 </a>
               </li>
               <li>
                 <a
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                  className={path == "/Profile" ? "block px-4 py-2 hover:bg-gray-50 font-semibold text-blue-600" : "block px-4 py-2 hover:bg-gray-50 text-gray-700"}
                   href="/Profile"
                 >
                   Profile
@@ -172,7 +175,7 @@ export default function Navbar() {
               </li>
               <li>
                 <a
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                  className={path == "/Pricing" ? "block px-4 py-2 hover:bg-gray-50 font-semibold text-blue-600" : "block px-4 py-2 hover:bg-gray-50 text-gray-700"}
                   href="/Pricing"
                 >
                   Pricing

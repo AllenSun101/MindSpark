@@ -4,7 +4,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useSession } from "next-auth/react"
 
-export default function CreateCourse(){
+export default function BuildCourse(){
     const [status, setStatus] = useState("Initial");
     const [followUpQs, setFollowUpQs] = useState([]);
     const [prompt, setPrompt] = useState("");

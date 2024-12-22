@@ -71,7 +71,7 @@ export default function Footer(){
                     </p>
                     <nav className="flex flex-col mt-4 space-y-2 text-sm text-gray-500">
                         <Link className="hover:opacity-75" href = "/MyCourses" > My Courses </Link>
-                        <Link className="hover:opacity-75" href = "/CreateCourse" > Build Course </Link>
+                        <Link className="hover:opacity-75" href = "/BuildCourse" > Build Course </Link>
                         <Link className="hover:opacity-75" href = "/Profile" > Profile </Link>
                         <Link className="hover:opacity-75" href = "/Pricing" > Pricing </Link>
                     </nav>
