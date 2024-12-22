@@ -319,7 +319,7 @@ router.get('/get_courses', async function(req, res, next) {
 
     const record = await collection.findOne({ email: email });
 
-    var courses = [];
+    var courses = {"courses": []};
     var status = "Success";
 
     if (record) {
