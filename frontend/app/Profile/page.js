@@ -26,8 +26,10 @@ export default function Profile(){
 
     if(!session?.user){
         return(
-            <div>
-                <p>Sign In First!</p>
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <div className="mt-40 mb-40 text-center">
+                    <p>Sign in to access this page!</p>
+                </div>
             </div>
         )
     }
