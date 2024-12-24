@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 const OpenAI = require('openai');
 const path = require('path');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const openai = new OpenAI({
@@ -393,6 +393,44 @@ router.get('/get_profile', async function(req, res, next) {
   }
 
   res.json( {profile: record, status: status} );
+
+});
+
+router.get('/get_outline', async function(req, res, next) {
+  // fetch outline given course id
+  const dbName = "MindSpark";
+  const collectionName = "Courses";
+  var status = "Success";
+
+  const courseId = req.query.courseId;
+
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+
+    const record = await collection.findOne({ _id: new ObjectId(courseId) });
+
+    var course_name = "";
+    var course_outline = {"course_outline": []};
+    var status = "Success";
+
+    if (record) {
+      course_name = record.course_name;
+      course_outline = record.course_outline.outline;
+    } else {
+      status = "Fail"
+    }
+  } 
+  catch(error){
+    console.error('Error fetching course outline:', error);
+    status = "Fail"
+  }
+  finally {
+    await client.close();
+  }
+
+  res.json( {course_name: course_name, course_outline: course_outline, status: status} );
 
 });
 
