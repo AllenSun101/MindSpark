@@ -3,6 +3,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useSession } from "next-auth/react"
+import Link from "next/link";
 
 export default function BuildCourse(){
     const [file, setFile] = useState();
@@ -13,6 +14,7 @@ export default function BuildCourse(){
     const [generateStatus, setGenerateStatus] = useState("");
     const { data: session } = useSession();
     const [isChecked, setIsChecked] = useState(false);
+    const [courseId, setCourseId] = useState();
     
 
     if(!session?.user){
@@ -94,6 +96,7 @@ export default function BuildCourse(){
                         <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Course Content</span>
                         <p>For course content, you can upload a document, such as a syllabus, or manually specify Topics to Include.
                             You can also select a file and use the manual Topics to Include field to specify topics to add or remove.
+                            If you do not specify any topics, we will select them for you!
                         </p>
                     </div>
                     <div className="flex mb-2">
@@ -202,6 +205,7 @@ export default function BuildCourse(){
         .then(response => {
             setStatus("Done");
             setGenerateStatus(response.data.message);
+            setCourseId(response.data.course_id);
         })
         .catch(error => {
             console.log(error);
@@ -236,11 +240,23 @@ export default function BuildCourse(){
     }
 
     function FinishCreating(){
+
+        if(generateStatus == "Fail"){
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <div className="mt-40 mb-40 text-center">
+                    <p>An error came up while generating your course. Please try again.</p>
+                </div>
+            </div>
+        }
+
         return(
-            <div>
-                <p>{generateStatus}</p>
-                <p>Successfully created your course!</p>
-                <button>Go to Course</button>
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <div className="mt-40 mb-40 text-center">
+                    <p className="mb-4">Successfully created your course!</p>
+                    <Link href={{ pathname: `/Course/${courseName}`, query: { course_id: courseId } }}>
+                        <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">Go to Course</button>
+                    </Link>
+                </div>
             </div>
         )
     }

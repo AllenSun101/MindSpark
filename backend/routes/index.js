@@ -239,6 +239,7 @@ router.post('/create_course', async function(req, res, next) {
 
   // create course document
   var status = "Success";
+  var insertedId = "";
   try{
     const newDocument = {
       email: email,
@@ -254,7 +255,7 @@ router.post('/create_course', async function(req, res, next) {
     const collection = database.collection(collectionName);
     const result = await collection.insertOne(newDocument);
 
-    const insertedId = result.insertedId;
+    insertedId = result.insertedId;
 
     // insert a course reference into user document
     const userCollectionName = "Users"
@@ -285,7 +286,7 @@ router.post('/create_course', async function(req, res, next) {
     await client.close();
   }
 
-  res.json( {"message": status} );
+  res.json( {"message": status, "course_id": insertedId} );
 });
 
 
