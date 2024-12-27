@@ -47,7 +47,7 @@ export default function Content(){
     return (
         <div>
             {topicContent && (
-                <CourseContent data={topicContent} courseId={courseId} subtopicIndex={subtopicIndex}/>
+                <CourseContent data={topicContent} courseId={courseId} topicIndex={topicIndex} subtopicIndex={subtopicIndex}/>
             )}        
         </div>
     )

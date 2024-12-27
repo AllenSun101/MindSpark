@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from "react";
+import Link from "next/link";
 
-export default function CourseContent({data, courseId, subtopicIndex}){
+export default function CourseContent({data, courseId, topicIndex, subtopicIndex}){
 
     console.log(data);
 
@@ -29,7 +30,9 @@ export default function CourseContent({data, courseId, subtopicIndex}){
                     <div className="px-2">
                         {subtopics.map((_, id) => (
                             <div key={id} className={`px-1 py-2 ${id == selectedSubtopic ? "text-blue-400" : ""}`}>
-                                <button onClick={() => {setSelectedSubtopic(id)}} className="text-left">{subtopics[id].subtopic_name}</button>
+                                <Link href={{query: { course_id: courseId, topic: topicIndex, subtopic: id } }}>
+                                    <button onClick={() => {setSelectedSubtopic(id)}} className="text-left">{subtopics[id].subtopic_name}</button>
+                                </Link>
                             </div>
                         ))}
                     </div>
@@ -45,12 +48,14 @@ export default function CourseContent({data, courseId, subtopicIndex}){
                 </div>
             )}
             <div className="px-16 py-6" style={{ width: sidebarOpen ? "80%" : "95%" }}>
-                <button className="mb-8 flex items-center space-x-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" className="w-4 h-4">
-                        <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/>
-                    </svg>
-                    <span>Back to Course</span>
-                </button>
+                <Link href={{ pathname: `./`, query: { course_id: courseId } }}>
+                    <button className="mb-8 flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" className="w-4 h-4">
+                            <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/>
+                        </svg>
+                        <span>Back to Course</span>
+                    </button>
+                </Link>
                 <div>
                     <div className="flex items-center space-x-4 mb-6">
                         <h1 className="text-2xl font-semibold">{subtopics[selectedSubtopic].subtopic_name}</h1>
