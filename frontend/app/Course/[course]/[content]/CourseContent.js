@@ -5,8 +5,6 @@ import Link from "next/link";
 
 export default function CourseContent({data, courseId, topicIndex, subtopicIndex}){
 
-    console.log(data);
-
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [selectedSubtopic, setSelectedSubtopic] = useState(subtopicIndex);
 
@@ -17,7 +15,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
     return(
         <div className="flex flex-row">
             {sidebarOpen && (
-                <div style={{ width: "20%" }} className="bg-gray-500 p-6 text-white">
+                <div style={{ width: "20%" }} className="bg-gradient-to-r from-[#f2e6fc] via-[#bce1ff] to-[#f2e6fc] p-6 text-gray-600">
                     <div className="flex justify-between items-center space-x-2">
                         <span className="text-xl truncate">{topic}</span>
                         <button onClick={() => {setSidebarOpen(false)}}>
@@ -26,7 +24,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                             </svg>
                         </button>
                     </div>
-                    <hr className="my-2"/>
+                    <hr className="my-2 border-gray-600"/>
                     <div className="px-2">
                         {subtopics.map((_, id) => (
                             <div key={id} className={`px-1 py-2 ${id == selectedSubtopic ? "text-blue-400" : ""}`}>
@@ -68,18 +66,22 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                     <p className="min-h-[20vh]">{subtopics[selectedSubtopic].subtopic_content}</p>
                 </div>
                 <div className="mt-16 flex justify-between">
-                    <button className="flex items-center space-x-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" className="w-4 h-4">
-                            <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"/>
-                        </svg>
-                        <span>Previous</span>
-                    </button>
-                    <button className="flex items-center space-x-1">
-                        <span>Next</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" className="w-4 h-4">
-                            <path d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"/>
-                        </svg>
-                    </button>
+                    <Link href={{query: { course_id: courseId, topic: topicIndex, subtopic: selectedSubtopic - 1 } }}>
+                        <button onClick={() => {setSelectedSubtopic(selectedSubtopic - 1)}} disabled={subtopicIndex == 0} className="flex items-center space-x-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" className="w-4 h-4">
+                                <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"/>
+                            </svg>
+                            <span>Previous</span>
+                        </button>
+                    </Link>
+                    <Link href={{query: { course_id: courseId, topic: topicIndex, subtopic: selectedSubtopic + 1 } }}>
+                        <button onClick={() => {setSelectedSubtopic(selectedSubtopic + 1)}} disabled={subtopicIndex == subtopics.length - 1} className="flex items-center space-x-1">
+                            <span>Next</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" className="w-4 h-4">
+                                <path d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"/>
+                            </svg>
+                        </button>
+                    </Link>
                 </div>
             </div>
         </div>

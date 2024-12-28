@@ -53,8 +53,11 @@ export default async function MyCourses(){
                 key={card.id}
                 className="bg-white shadow-md rounded-lg p-8 border border-gray-200 aspect-[2/2] flex flex-col justify-between"
                 >
-                    <div>
-                        <h2 className="text-lg font-semibold mb-2 text-center">{card.name}</h2>
+                    <div className="flex items-center justify-between w-full">
+                        <h2 className="text-lg font-semibold mb-2 text-center flex-1">{card.name}</h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 512" className="w-2 h-5 ml-auto">
+                            <path d="M64 360a56 56 0 1 0 0 112 56 56 0 1 0 0-112zm0-160a56 56 0 1 0 0 112 56 56 0 1 0 0-112zM120 96A56 56 0 1 0 8 96a56 56 0 1 0 112 0z"/>
+                        </svg>
                     </div>
                     <div className="flex flex-col justify-center items-center">
                         <Link href={{ pathname: `/Course/${card.name}`, query: { course_id: card.id } }}>
