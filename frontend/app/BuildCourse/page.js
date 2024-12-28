@@ -33,7 +33,9 @@ export default function BuildCourse(){
         setFile(selectedFile);
     };
 
-    const handleToggle = () => {
+    // debug check box and file upload state fields
+    const handleToggle = (event) => {
+        event.preventDefault();
         setIsChecked(prev => !prev);
     };
 
@@ -48,6 +50,7 @@ export default function BuildCourse(){
             learningStyle: event.target.learningStyle.value,
             contentFormat: event.target.contentFormat.value,
             includedTopics: event.target.includedTopics.value,
+            limitedTopics: isChecked,
             courseLogistics: event.target.courseLogistics.value,
             otherRequests: event.target.otherRequests.value,
         })
@@ -94,7 +97,7 @@ export default function BuildCourse(){
 
                     <div className="mb-4">
                         <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Course Content</span>
-                        <p>For course content, you can upload a document, such as a syllabus, or manually specify Topics to Include.
+                        <p className="mt-2">For course content, you can upload a document, such as a syllabus, or manually specify Topics to Include.
                             You can also select a file and use the manual Topics to Include field to specify topics to add or remove.
                             If you do not specify any topics, we will select them for you!
                         </p>

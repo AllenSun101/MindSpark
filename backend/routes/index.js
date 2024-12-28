@@ -48,6 +48,7 @@ router.post('/follow_ups', async function(req, res, next) {
     "Learning Style": req.body.learningStyle,
     "Content Format": req.body.contentFormat,
     "Included Topics": req.body.includedTopics,
+    "Limited Topics": req.body.limitedTopics,
     "Logistics": req.body.courseLogistics,
     "Other Requests": req.body.otherRequests,
   }
@@ -62,6 +63,16 @@ router.post('/follow_ups', async function(req, res, next) {
     if(fields[key] == ""){
       if(key != "Other Requests"){
         emptyFields.push(key);
+      }
+    }
+    else if(key == "Limited Topics"){
+      if(fields[key] && fields["Included Topics"] != ""){
+        prompt += "Do not include additional topics. ";
+        promptTemplate += "Do not include additional topics. ";
+      }
+      else if(!fields[key] && fields["Included Topics"] != ""){
+        prompt += "Additional relevant topics can be included. ";
+        promptTemplate += "Additional relevant topics can be included. ";
       }
     }
     else{
