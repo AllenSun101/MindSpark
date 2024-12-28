@@ -10,12 +10,27 @@ export default function BuildCourse(){
     const [status, setStatus] = useState("Initial");
     const [followUpQs, setFollowUpQs] = useState([]);
     const [prompt, setPrompt] = useState("");
-    const [courseName, setCourseName] = useState("");
     const [generateStatus, setGenerateStatus] = useState("");
     const { data: session } = useSession();
     const [isChecked, setIsChecked] = useState(false);
     const [courseId, setCourseId] = useState();
-    
+    const [formState, setFormState] = useState({
+        courseName: "",
+        learningStyle: "",
+        contentFormat: "",
+        includedTopics: "",
+        courseLogistics: "",
+        otherRequests: ""
+    });
+
+
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setFormState((prevState) => ({
+            ...prevState,
+            [name]: value,
+        }));
+    };
 
     if(!session?.user){
         return(
@@ -33,26 +48,21 @@ export default function BuildCourse(){
         setFile(selectedFile);
     };
 
-    // debug check box and file upload state fields
     const handleToggle = (event) => {
-        event.preventDefault();
         setIsChecked(prev => !prev);
     };
 
-    // displays fields- just text option for now
     function HandleInitialQuestions(event){
         event.preventDefault();
 
-        setCourseName(event.target.courseName.value);
-
         axios.post("http://localhost:3001/follow_ups", {
-            courseName: event.target.courseName.value,
-            learningStyle: event.target.learningStyle.value,
-            contentFormat: event.target.contentFormat.value,
-            includedTopics: event.target.includedTopics.value,
+            courseName: formState.courseName,
+            learningStyle: formState.learningStyle,
+            contentFormat: formState.contentFormat,
+            includedTopics: formState.includedTopics,
             limitedTopics: isChecked,
-            courseLogistics: event.target.courseLogistics.value,
-            otherRequests: event.target.otherRequests.value,
+            courseLogistics: formState.courseLogistics,
+            otherRequests: formState.otherRequests,
         })
         .then(response => {
             console.log(response.data);
@@ -65,121 +75,154 @@ export default function BuildCourse(){
         })
     }
 
-    function InitialQuestions(){
+    if(status == "Initial"){
         return (
-            <div>
-                <h2 className="mb-12"> To build your personalized course, fill out the initial fields below. Not all fields are 
-                    required. However, for best results, it is recommended to answer thoroughly with relevant specifications 
-                    only. Once you submit, follow-up questions will appear so that we can better understand your needs!
-                </h2>
-                <form onSubmit={HandleInitialQuestions}>
-                    <div className="flex mb-6">
-                        <label className="mr-4">Course Name: </label>
-                        <input type="text" className="border border-gray-900 w-full max-w-xl py-1 px-2 rounded-lg border-2" name="courseName" required></input>
-                    </div>
-
-                    <div className="mb-2">
-                        <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Course Style</span>
-                    </div>
-                    <div className="flex mb-2">
-                        <label>What strategies can be used to help you effectively learn?</label>
-                    </div>
-                    <div className="flex mb-6">
-                        <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" name="learningStyle" rows="3"></textarea>
-                    </div>
-
-                    <div className="flex mb-2">
-                        <label>How should content be formatted?</label>
-                    </div>
-                    <div className="flex mb-6">
-                        <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" name="contentFormat" rows="3"></textarea>
-                    </div>
-
-                    <div className="mb-4">
-                        <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Course Content</span>
-                        <p className="mt-2">For course content, you can upload a document, such as a syllabus, or manually specify Topics to Include.
-                            You can also select a file and use the manual Topics to Include field to specify topics to add or remove.
-                            If you do not specify any topics, we will select them for you!
-                        </p>
-                    </div>
-                    <div className="flex mb-2">
-                        <label>Upload File</label>
-                    </div>
-                    <div className="mb-4 relative w-64 h-64 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-lg flex items-center justify-center border-dashed border-4 border-gray-500 cursor-pointer">
-                        <input
-                            type="file"
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer mb-6"
-                            onChange={handleFileChange}
-                            accept=".txt, .pdf, .docx, .rtf"
-                        />
-                        <div className="text-gray-500 text-6xl font-bold">+</div>
-                    </div>
-
-                    <div className="mb-6">
-                        {file && (
-                            <div>
-                                <h2 className='font-bold'>Selected File:</h2>
-                                <ul>
-                                    {file.name}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex mb-2">
-                        <label>Topics to Include</label>
-                    </div>
-                    <div className="flex mb-6">
-                        <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" name="includedTopics" rows="3"></textarea>
-                    </div>
-                    
-                    <div className="mb-6 flex items-center space-x-4">
-                        <span>Limit only to specified topics (in document and/or Topics to Include field)?</span>
-                        <div className="flex items-center space-x-4">
-                            {/* No on the left */}
-                            <span className={`${isChecked ? 'text-gray-500' : 'text-gray-700'}`}>No</span>
-
-                            {/* Switch */}
-                            <label className="relative inline-flex cursor-pointer items-center">
-                                <input
-                                    id="switch"
-                                    type="checkbox"
-                                    className="peer sr-only"
-                                    checked={isChecked}
-                                    onChange={handleToggle}
-                                />
-                                <div className="h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa] relative">
-                                    <div
-                                    className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full border border-gray-300 bg-white transition-all ${
-                                        isChecked ? 'translate-x-5' : 'translate-x-0'
-                                    }`}
-                                    ></div>
-                                </div>
-                            </label>
-
-                            {/* Yes on the right */}
-                            <span className={`${isChecked ? 'text-gray-700' : 'text-gray-500'}`}>Yes</span>
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <h1 className="text-center font-semibold text-3xl mb-6">Build a Course</h1>
+                <div>
+                    <h2 className="mb-12"> To build your personalized course, fill out the initial fields below. Not all fields are 
+                        required. However, for best results, it is recommended to answer thoroughly with relevant specifications 
+                        only. Once you submit, follow-up questions will appear so that we can better understand your needs!
+                    </h2>
+                    <form onSubmit={HandleInitialQuestions}>
+                        <div className="flex mb-6">
+                            <label className="mr-4">Course Name: </label>
+                            <input type="text" className="border border-gray-900 w-full max-w-xl py-1 px-2 rounded-lg border-2" 
+                                name="courseName" 
+                                required
+                                value={formState.courseName}
+                                onChange={handleInputChange}>
+                            </input>
                         </div>
-                    </div>
-                    
-                    <div className="flex mb-2">
-                        <label>How thorough, detailed, and difficult should the content be?</label>
-                    </div>
-                    <div className="flex mb-6">
-                        <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" name="courseLogistics" rows="3"></textarea>
-                    </div>
-                    
-                    <div className="mb-2">
-                        <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Additional Logistics</span>
-                    </div>
-                    <div className="flex mb-2">
-                        <label>Other Requests</label>
-                    </div>
-                    <div className="flex mb-6">
-                        <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" name="otherRequests" rows="3"></textarea>
-                    </div>
-                    <button type="submit" className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">Next</button>
-                </form>
+
+                        <div className="mb-2">
+                            <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Course Style</span>
+                        </div>
+                        <div className="flex mb-2">
+                            <label>What strategies can be used to help you effectively learn?</label>
+                        </div>
+                        <div className="flex mb-6">
+                            <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
+                                name="learningStyle" 
+                                rows="3"
+                                value={formState.learningStyle}
+                                onChange={handleInputChange}>
+                            </textarea>
+                        </div>
+
+                        <div className="flex mb-2">
+                            <label>How should content be formatted?</label>
+                        </div>
+                        <div className="flex mb-6">
+                            <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
+                                name="contentFormat" 
+                                rows="3"
+                                value={formState.contentFormat}
+                                onChange={handleInputChange}>
+                            </textarea>
+                        </div>
+
+                        <div className="mb-4">
+                            <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Course Content</span>
+                            <p className="mt-2">For course content, you can upload a document, such as a syllabus, or manually specify Topics to Include.
+                                You can also select a file and use the manual Topics to Include field to specify topics to add or remove.
+                                If you do not specify any topics, we will select them for you!
+                            </p>
+                        </div>
+                        <div className="flex mb-2">
+                            <label>Upload File</label>
+                        </div>
+                        <div className="mb-4 relative w-64 h-64 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-lg flex items-center justify-center border-dashed border-4 border-gray-500 cursor-pointer">
+                            <input
+                                type="file"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer mb-6"
+                                onChange={handleFileChange}
+                                accept=".txt, .pdf, .docx, .rtf"
+                            />
+                            <div className="text-gray-500 text-6xl font-bold">+</div>
+                        </div>
+
+                        <div className="mb-6">
+                            {file && (
+                                <div>
+                                    <h2 className='font-bold'>Selected File:</h2>
+                                    <ul>
+                                        {file.name}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex mb-2">
+                            <label>Topics to Include</label>
+                        </div>
+                        <div className="flex mb-6">
+                            <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
+                                name="includedTopics" 
+                                rows="3"
+                                value={formState.includedTopics}
+                                onChange={handleInputChange}>
+                            </textarea>
+                        </div>
+                        
+                        <div className="mb-6 flex items-center space-x-4">
+                            <span>Limit only to specified topics (in document and/or Topics to Include field)?</span>
+                            <div className="flex items-center space-x-4">
+                                {/* No on the left */}
+                                <span className={`${isChecked ? 'text-gray-500' : 'text-gray-700'}`}>No</span>
+
+                                {/* Switch */}
+                                <label className="relative inline-flex cursor-pointer items-center">
+                                    <input
+                                        id="switch"
+                                        type="checkbox"
+                                        className="peer sr-only"
+                                        checked={isChecked}
+                                        onChange={handleToggle}
+                                    />
+                                    <div className="h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa] relative">
+                                        <div
+                                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full border border-gray-300 bg-white transition-all ${
+                                            isChecked ? 'translate-x-5' : 'translate-x-0'
+                                        }`}
+                                        ></div>
+                                    </div>
+                                </label>
+
+                                {/* Yes on the right */}
+                                <span className={`${isChecked ? 'text-gray-700' : 'text-gray-500'}`}>Yes</span>
+                            </div>
+                        </div>
+                        
+                        <div className="flex mb-2">
+                            <label>How thorough, detailed, and difficult should the content be?</label>
+                        </div>
+                        <div className="flex mb-6">
+                            <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
+                                name="courseLogistics" 
+                                rows="3"
+                                value={formState.courseLogistics}
+                                onChange={handleInputChange}>
+                            </textarea>
+                        </div>
+                        
+                        <div className="mb-2">
+                            <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Additional Logistics</span>
+                        </div>
+                        <div className="flex mb-2">
+                            <label>Other Requests</label>
+                        </div>
+                        <div className="flex mb-6">
+                            <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
+                                name="otherRequests" 
+                                rows="3"
+                                value={formState.otherRequests}
+                                onChange={handleInputChange}>
+                            </textarea>
+                        </div>
+                        <button type="submit" className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">Next</button>
+                    </form>
+                </div>
             </div>
         )
     }
@@ -201,7 +244,7 @@ export default function BuildCourse(){
         axios.post("http://localhost:3001/create_course", {
             previousPrompt: prompt,
             questions: questionAnswerMap,
-            courseName: courseName,
+            courseName: formState.courseName,
             email: session.user.email,
             name: session.user.name,
         })
@@ -215,59 +258,56 @@ export default function BuildCourse(){
         })
     }
 
-    function FollowUpQuestions(){
+    if(status == "Follow-Up"){
         // form to answer follow up questions
         return(
-            <div>
-                <h2 className="mb-12">Answer the follow-up questions and then submit to start generating your
-                    course. Not all questions are required, but it is recommended to clarify your specifications
-                    as necessary. 
-                </h2>
-                <form onSubmit={HandleFollowUpQuestions}>
-                    {followUpQs.map((question, index) => {
-                        return(
-                            <div key={index}>
-                                <div className="flex mb-2">
-                                    <label>{question}</label>
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <h1 className="text-center font-semibold text-3xl mb-6">Build a Course</h1>
+                <div>
+                    <h2 className="mb-12">Answer the follow-up questions and then submit to start generating your
+                        course. Not all questions are required, but it is recommended to clarify your specifications
+                        as necessary. 
+                    </h2>
+                    <form onSubmit={HandleFollowUpQuestions}>
+                        {followUpQs.map((question, index) => {
+                            return(
+                                <div key={index}>
+                                    <div className="flex mb-2">
+                                        <label>{question}</label>
+                                    </div>
+                                    <div className="flex mb-6">
+                                        <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" name={index}></textarea>
+                                    </div>
                                 </div>
-                                <div className="flex mb-6">
-                                    <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" name={index}></textarea>
-                                </div>
-                            </div>
-                        )
-                    })}
-                    <button type="submit" className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">Create Course</button>
-                </form>
+                            )
+                        })}
+                        <button type="submit" className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">Create Course</button>
+                    </form>
+                </div>
             </div>
         )
     }
-
-    function FinishCreating(){
-
-        if(generateStatus == "Fail"){
+    
+    if(generateStatus == "Fail"){
+        return(
             <div className="container mx-auto px-8 lg:px-16 py-12">
+                <h1 className="text-center font-semibold text-3xl mb-6">Build a Course</h1>
                 <div className="mt-40 mb-40 text-center">
                     <p>An error came up while generating your course. Please try again.</p>
                 </div>
             </div>
-        }
-
-        return(
-            <div className="container mx-auto px-8 lg:px-16 py-12">
-                <div className="mt-40 mb-40 text-center">
-                    <p className="mb-4">Successfully created your course!</p>
-                    <Link href={{ pathname: `/Course/${courseName}`, query: { course_id: courseId } }}>
-                        <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">Go to Course</button>
-                    </Link>
-                </div>
-            </div>
         )
     }
-
-    return (
+    
+    return(
         <div className="container mx-auto px-8 lg:px-16 py-12">
             <h1 className="text-center font-semibold text-3xl mb-6">Build a Course</h1>
-            {status == "Initial" ? <InitialQuestions /> : status == "Follow-Up" ? <FollowUpQuestions /> : <FinishCreating />}
+            <div className="mt-40 mb-40 text-center">
+                <p className="mb-4">Successfully created your course!</p>
+                <Link href={{ pathname: `/Course/${formState.courseName}`, query: { course_id: courseId } }}>
+                    <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">Go to Course</button>
+                </Link>
+            </div>
         </div>
     )
 }

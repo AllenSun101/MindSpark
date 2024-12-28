@@ -71,8 +71,8 @@ router.post('/follow_ups', async function(req, res, next) {
         promptTemplate += "Do not include additional topics. ";
       }
       else if(!fields[key] && fields["Included Topics"] != ""){
-        prompt += "Additional relevant topics can be included. ";
-        promptTemplate += "Additional relevant topics can be included. ";
+        prompt += "Include additional relevant topics as needed. ";
+        promptTemplate += "Include additional relevant topics as needed. ";
       }
     }
     else{
