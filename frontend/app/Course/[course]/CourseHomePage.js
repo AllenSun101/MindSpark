@@ -1,30 +1,19 @@
 'use client'
 
 import { useState } from "react";
+import Link from "next/link";
 
-export default function CourseHomePage(){
+export default function CourseHomePage({data, courseId}){
 
     const [contentOpen, setContentOpen] = useState(false);
     const [selectedOption, setSelectedOption] = useState("content");
-    const [selectedTopic, setSelectedTopic] = useState(1);
+    const [selectedTopic, setSelectedTopic] = useState(0);
 
-    const courseName = "Introduction to Basic Brain Rot Terms";
-    const courseDescription = "This is a beginner-friendly, yet in depth course, going into detail over various brain rot terms and their origins";
+    const courseName = data.course_name
+    const courseDescription = "No Description";
 
     //0 = incomplete, 1 = in progress, 2 = complete
-    const topics = {
-        1: { 
-            title: 'Rizz', 
-            subtopics: {
-                1: { title: "Origins of Rizz: Gen Alpha's intriguing slang", status: "complete"},
-                2: { title: "Excercise: Applications of rizz", status: "complete"}
-            }, 
-            status: 2 
-        },
-        2: { title: 'Gyatt', subtopics: {}, status: 2 },
-        3: { title: 'Skibidi', subtopics: {}, status: 1 },
-        4: { title: 'Sigma', subtopics: {}, status: 0 }
-    }
+    const topics = data.course_outline;
 
     const grades = {
         1: { assignment: 'Rizz practical', weight: 10, grade: 89 },
@@ -36,13 +25,13 @@ export default function CourseHomePage(){
     function DisplayTopic(){
         return(
             <div>
-                <h1 className="text-2xl font-semibold mb-4">{topics[selectedTopic].title}</h1>
-                {Object.keys(topics[selectedTopic].subtopics).map((id) => (
+                <h1 className="text-2xl font-semibold mb-4">{topics[selectedTopic].topic}</h1>
+                {topics[selectedTopic].subtopics.map((_, id) => (
                     <div key={id} className="flex items-center space-x-2 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[selectedTopic].subtopics[id].status === "complete" ? "green" : "gray"}`} className="w-3 h-3">
                             <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
                         </svg>
-                        <a href="/">{topics[selectedTopic].subtopics[id].title}</a>
+                        <Link href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: id } }}>{topics[selectedTopic].subtopics[id]}</Link>
                     </div>
                 ))}
             </div>
@@ -84,7 +73,7 @@ export default function CourseHomePage(){
                     </button>
                     {contentOpen && (
                         <div className="flex flex-col items-start ml-6">
-                            {Object.keys(topics).map((id) => (
+                            {topics.map((_, id) => (
                                 <button 
                                 key={id}
                                 className={`${selectedTopic == id ? "border-blue-500" : "border-transparent"} border px-2 py-1 w-full justify-start flex items-center space-x-2`}
@@ -93,7 +82,7 @@ export default function CourseHomePage(){
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[id].status === 0 ? "gray" : topics[id].status === 1 ? "yellow" : "green"}`} className="w-3 h-3">
                                         <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
                                     </svg>
-                                    <span>Topic {id}: {topics[id].title}</span>
+                                    <span>Topic {id + 1}: {topics[id].topic}</span>
                                 </button>
                             ))}
                         </div>

@@ -1,9 +1,21 @@
 'use client'
 
-import { useSession } from "next-auth/react"
+import { useSession } from "next-auth/react";
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import axios from 'axios';
+import CourseContent from "./CourseContent";
 
 export default function Content(){
+
+    const searchParams = useSearchParams()
+    const courseId = searchParams.get("course_id")
+    const topicIndex = searchParams.get("topic")
+    const subtopicIndex = searchParams.get("subtopic")
+
     const { data: session } = useSession();
+
+    const [topicContent, setTopicContent] = useState();
 
 
     if(!session?.user){
@@ -15,10 +27,28 @@ export default function Content(){
             </div>
         )
     }
+
+    const fetchContent = async () => {
+        const { data } = await axios.get("http://localhost:3001/get_content", {
+            params: {
+                courseId: courseId,
+                topicIndex: topicIndex
+            }
+        })
+        if(!topicContent){
+            setTopicContent(data);
+        }
+    }
+
+    if(!topicContent){
+        fetchContent();
+    }
     
     return (
         <div>
-            
+            {topicContent && (
+                <CourseContent data={topicContent} courseId={courseId} topicIndex={topicIndex} subtopicIndex={subtopicIndex}/>
+            )}        
         </div>
     )
 }

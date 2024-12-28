@@ -4,12 +4,12 @@ import axios from 'axios';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import { useState } from 'react';
+import CourseHomePage from './CourseHomePage';
 
 export default function Course(){
 
     const searchParams = useSearchParams()
     const courseId = searchParams.get("course_id")
-    console.log(courseId);
 
     const { data: session } = useSession();
 
@@ -34,7 +34,6 @@ export default function Course(){
                 courseId: courseId
             }
         })
-        console.log(data)
         if(!courseData){
             setCourseData(data);
         }
@@ -46,9 +45,8 @@ export default function Course(){
     
     return (
         <div>
-            <p>Course Home Page</p>
             {courseData && (
-                <h1>{courseData.course_outline[0].topic}</h1>
+                <CourseHomePage data={courseData} courseId={courseId}/>
             )}
         </div>
     )

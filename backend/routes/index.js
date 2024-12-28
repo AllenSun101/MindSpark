@@ -446,4 +446,41 @@ router.get('/get_outline', async function(req, res, next) {
 
 });
 
+router.get('/get_content', async function(req, res, next) {
+  // fetch outline given course id
+  const dbName = "MindSpark";
+  const collectionName = "Courses";
+  var status = "Success";
+
+  const courseId = req.query.courseId;
+  const topicIndex = req.query.topicIndex;
+
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+
+    const record = await collection.findOne({ _id: new ObjectId(courseId) });
+
+    var topic_data = {"topic": {},"subtopics": []};
+    var status = "Success";
+
+    if (record) {
+      topic_data = record.course_content[topicIndex]
+    } else {
+      status = "Fail"
+    }
+  } 
+  catch(error){
+    console.error('Error fetching course outline:', error);
+    status = "Fail"
+  }
+  finally {
+    await client.close();
+  }
+
+  res.json( {topic_data: topic_data.topic, subtopics: topic_data.subtopics, status: status} );
+
+});
+
 module.exports = router;
