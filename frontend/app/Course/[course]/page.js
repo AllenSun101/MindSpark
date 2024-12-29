@@ -46,7 +46,7 @@ export default function Course(){
     return (
         <div>
             {courseData && (
-                <CourseHomePage data={courseData} courseId={courseId}/>
+                <CourseHomePage data={courseData} courseId={courseId} session={session}/>
             )}
         </div>
     )

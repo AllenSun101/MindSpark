@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function CourseContent({data, courseId, topicIndex, subtopicIndex}){
 
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [selectedSubtopic, setSelectedSubtopic] = useState(subtopicIndex);
+    const [selectedSubtopic, setSelectedSubtopic] = useState(Number(subtopicIndex));
 
     const topic = data.topic_data.topic_name;
 
@@ -15,7 +15,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
     return(
         <div className="flex flex-row">
             {sidebarOpen && (
-                <div style={{ width: "20%" }} className="bg-gradient-to-r from-[#f2e6fc] via-[#bce1ff] to-[#f2e6fc] p-6 text-gray-600">
+                <div style={{ width: "20%" }} className="p-6">
                     <div className="flex justify-between items-center space-x-2">
                         <span className="text-xl truncate">{topic}</span>
                         <button onClick={() => {setSidebarOpen(false)}}>
@@ -45,6 +45,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                     </button>
                 </div>
             )}
+            <div className="w-1 bg-gray-500"></div>
             <div className="px-16 py-6" style={{ width: sidebarOpen ? "80%" : "95%" }}>
                 <Link href={{ pathname: `./`, query: { course_id: courseId } }}>
                     <button className="mb-8 flex items-center space-x-2">

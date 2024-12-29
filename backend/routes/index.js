@@ -447,7 +447,6 @@ router.get('/get_outline', async function(req, res, next) {
 });
 
 router.get('/get_content', async function(req, res, next) {
-  // fetch outline given course id
   const dbName = "MindSpark";
   const collectionName = "Courses";
   var status = "Success";
@@ -472,7 +471,7 @@ router.get('/get_content', async function(req, res, next) {
     }
   } 
   catch(error){
-    console.error('Error fetching course outline:', error);
+    console.error('Error fetching course content:', error);
     status = "Fail"
   }
   finally {
@@ -481,6 +480,52 @@ router.get('/get_content', async function(req, res, next) {
 
   res.json( {topic_data: topic_data.topic, subtopics: topic_data.subtopics, status: status} );
 
+});
+
+router.delete('/delete_course', async function(req, res, next) {
+  const dbName = "MindSpark";
+  const collectionName = "Courses";
+  var status = "Success";
+
+  const courseId = req.query.courseId;
+  const email = req.query.email;
+
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+
+    const record = await collection.findOneAndDelete({ _id: new ObjectId(courseId) });
+
+    if (!record) {
+      status = "Fail"
+    }
+
+    const userCollectionName = "Users"
+    const userCollection = database.collection(userCollectionName);
+    
+    const userRecord = await userCollection.findOne({ email: email });
+    
+    const filter = { email: email };
+    const update = { $pull: { courses: {id: new ObjectId(courseId)} } };
+
+    const updateReferenceResult = await userCollection.findOneAndUpdate(
+      filter,
+      update,
+      { returnDocument: "after" } // Return the updated document
+    );
+
+    console.log(updateReferenceResult.value);
+  } 
+  catch(error){
+    console.error('Error deleting course:', error);
+    status = "Fail"
+  }
+  finally {
+    await client.close();
+  }
+
+  res.json( {status: status} );
 });
 
 module.exports = router;

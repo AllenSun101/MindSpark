@@ -2,18 +2,34 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import axios from "axios";
 
-export default function CourseHomePage({data, courseId}){
+export default function CourseHomePage({data, courseId, session}){
 
     const [contentOpen, setContentOpen] = useState(false);
     const [selectedOption, setSelectedOption] = useState("content");
     const [selectedTopic, setSelectedTopic] = useState(0);
+
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [deleteResult, setDeleteResult] = useState();
 
     const courseName = data.course_name
     const courseDescription = "No Description";
 
     //0 = incomplete, 1 = in progress, 2 = complete
     const topics = data.course_outline;
+
+    const handleDeleteCourse = async () => {
+        const { data } = await axios.delete("http://localhost:3001/delete_course", {
+            params: {
+                email: session.user.email,
+                courseId: courseId
+            }
+        })
+        console.log(data)
+        setShowDeleteConfirmation(false);
+        setDeleteResult(data.status);
+    };
 
     const grades = {
         1: { assignment: 'Rizz practical', weight: 10, grade: 89 },
@@ -58,42 +74,109 @@ export default function CourseHomePage({data, courseId}){
             </div>
         );
     }
-    
+
+    function DisplayStats(){
+        return(
+            <div>
+                <h1 className="text-2xl font-semibold mb-4">Completion Statistics</h1>
+            </div>
+        );
+    }
+
+    function DisplaySettings(){
+        return(
+            <div>
+                <h1 className="text-2xl font-semibold mb-4">Course Settings</h1>
+                <button className="bg-red-500 hover:bg-red-600 p-2 rounded-lg"
+                onClick={() => {setShowDeleteConfirmation(true)}}
+                >
+                    Delete Course
+                </button>
+            </div>
+        );
+    }
+
     return(
-        <div className="flex flex-row space-x-20 px-24 py-16">
-            <div style={{ width: "30%" }}>
-                <h1 className="text-2xl font-bold mb-4">{courseName}</h1>
-                <h2>{courseDescription}</h2>
-                <div className="mt-8 flex flex-col items-start space-y-2">
-                    <button className="text-lg flex items-center space-x-1" onClick={() => {setContentOpen(!contentOpen)}}>
-                        <span>Course Content</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" className="w-6 h-6">
-                            <path d={`${contentOpen ? "M182.6 137.4c-12.5-12.5-32.8-12.5-45.3 0l-128 128c-9.2 9.2-11.9 22.9-6.9 34.9s16.6 19.8 29.6 19.8l256 0c12.9 0 24.6-7.8 29.6-19.8s2.2-25.7-6.9-34.9l-128-128z" : "M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z"}`}/>
-                        </svg>
-                    </button>
-                    {contentOpen && (
-                        <div className="flex flex-col items-start ml-6">
-                            {topics.map((_, id) => (
-                                <button 
-                                key={id}
-                                className={`${selectedTopic == id ? "border-blue-500" : "border-transparent"} border px-2 py-1 w-full justify-start flex items-center space-x-2`}
-                                onClick={() => {setSelectedTopic(id); setSelectedOption("content")}}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[id].status === 0 ? "gray" : topics[id].status === 1 ? "yellow" : "green"}`} className="w-3 h-3">
-                                        <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
-                                    </svg>
-                                    <span>Topic {id + 1}: {topics[id].topic}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    <button onClick={() => {setSelectedOption("grades"); setSelectedTopic()}} className="text-lg">Grades</button>
+        <div>
+            <div className="flex flex-row space-x-20 px-24 py-16">
+                <div style={{ width: "30%" }}>
+                    <h1 className="text-2xl font-bold mb-4">{courseName}</h1>
+                    <h2>{courseDescription}</h2>
+                    <div className="mt-8 flex flex-col items-start space-y-2">
+                        <button className="text-lg flex items-center space-x-1" onClick={() => {setContentOpen(!contentOpen)}}>
+                            <span>Course Content</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" className="w-6 h-6">
+                                <path d={`${contentOpen ? "M182.6 137.4c-12.5-12.5-32.8-12.5-45.3 0l-128 128c-9.2 9.2-11.9 22.9-6.9 34.9s16.6 19.8 29.6 19.8l256 0c12.9 0 24.6-7.8 29.6-19.8s2.2-25.7-6.9-34.9l-128-128z" : "M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z"}`}/>
+                            </svg>
+                        </button>
+                        {contentOpen && (
+                            <div className="flex flex-col items-start ml-6 space-y-1">
+                                {topics.map((_, id) => (
+                                    <button 
+                                    key={id}
+                                    className={`${selectedTopic == id ? "border-blue-500" : "border-transparent"} border px-2 py-1 w-full justify-start flex items-center space-x-2`}
+                                    onClick={() => {setSelectedTopic(id); setSelectedOption("content")}}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[id].status === 0 ? "gray" : topics[id].status === 1 ? "yellow" : "green"}`} className="w-3 h-3 flex-shrink-0">
+                                            <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
+                                        </svg>
+                                        <span className="text-left">Topic {id + 1}: {topics[id].topic}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <button onClick={() => {setSelectedOption("grades"); setSelectedTopic()}} className="text-lg">Grades</button>
+                        <button onClick={() => {setSelectedOption("stats"); setSelectedTopic()}} className="text-lg">Completion Statistics</button>
+                        <button onClick={() => {setSelectedOption("settings"); setSelectedTopic()}} className="text-lg">Course Settings</button>
+                    </div>
+                </div>
+                <div className="w-1 bg-gray-500"></div>
+                <div style={{ width: "50%" }}>
+                    {selectedOption === "content" ? <DisplayTopic/> : selectedOption === "grades" ? <DisplayGrades/> : selectedOption === "stats" ? <DisplayStats/> : <DisplaySettings/>}
                 </div>
             </div>
-            <div className="w-1 bg-gray-500"></div>
-            <div style={{ width: "50%" }}>
-                {selectedOption === "content" ? <DisplayTopic/> : <DisplayGrades/>}
-            </div>
+
+            {showDeleteConfirmation && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-80">
+                    <p className="text-lg mb-4 text-center">Are you sure you want to delete this course?</p>
+                    <div className="flex justify-between">
+                    <button
+                        className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition w-24"
+                        onClick={handleDeleteCourse}
+                    >
+                        Confirm
+                    </button>
+                    <button
+                        className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
+                        onClick={() => {setShowDeleteConfirmation(false)}}
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </div>
+                </div>
+            )}
+
+            {deleteResult && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-80 items-center flex flex-col">
+                    <p className="text-lg mb-4 text-center">{deleteResult == "Success" ? "Course successfully deleted" : "Error deleting course"}</p>
+                    {deleteResult == "Success" && (
+                        <Link href={"/MyCourses"}>
+                            <button className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition">Return to courses</button>
+                        </Link>
+                    )}
+                    {deleteResult == "Fail" && (
+                        <button className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition"
+                        onClick={() => {setDeleteResult()}}
+                        >
+                            Close
+                        </button>
+                    )}
+                </div>
+                </div>
+            )}
         </div>
     );
 }
