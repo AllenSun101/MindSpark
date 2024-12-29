@@ -45,9 +45,11 @@ export default function MyCourses() {
 
     if (loading) {
         return (
-        <div className="container mx-auto px-8 lg:px-16 py-12">
-            <div className="text-center">Loading...</div>
-        </div>
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <div className="mt-40 mb-40 text-center">
+                    <p>Loading...</p>
+                </div>
+            </div>
         );
     }
 

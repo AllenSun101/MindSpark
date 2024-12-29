@@ -22,7 +22,7 @@ export default function BuildCourse(){
         courseLogistics: "",
         otherRequests: ""
     });
-
+    const [loading, setLoading] = useState(false);
 
     const handleInputChange = (event) => {
         const { name, value } = event.target;
@@ -42,6 +42,18 @@ export default function BuildCourse(){
         )
     }
 
+    if (loading) {
+        return (
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <h1 className="text-center font-semibold text-3xl mb-6">Build a Course</h1>
+                <div className="mt-40 mb-40 text-center">
+                    <p>Loading...</p>
+                    <p>Course generation can take a while, depending on depth. Please be patient!</p>
+                </div>
+            </div>
+        );
+    }
+
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
         console.log(selectedFile);
@@ -54,6 +66,7 @@ export default function BuildCourse(){
 
     function HandleInitialQuestions(event){
         event.preventDefault();
+        setLoading(true);
 
         axios.post("http://localhost:3001/follow_ups", {
             courseName: formState.courseName,
@@ -69,6 +82,7 @@ export default function BuildCourse(){
             setPrompt(response.data.prompt);
             setFollowUpQs(response.data.response);
             setStatus("Follow-Up");
+            setLoading(false);
         })
         .catch(error => {
             console.log(error);
@@ -229,8 +243,8 @@ export default function BuildCourse(){
 
     function HandleFollowUpQuestions(event){
         // course created, with button to access
-        // backend returns prompt v1
         event.preventDefault();
+        setLoading(true);
 
         const form = event.target;
         const formData = new FormData(form);
@@ -252,6 +266,7 @@ export default function BuildCourse(){
             setStatus("Done");
             setGenerateStatus(response.data.message);
             setCourseId(response.data.course_id);
+            setLoading(false);
         })
         .catch(error => {
             console.log(error);
