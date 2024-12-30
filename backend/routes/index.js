@@ -2,8 +2,14 @@ var express = require('express');
 var router = express.Router();
 const OpenAI = require('openai');
 const path = require('path');
+const multer = require('multer');
+const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
+const RTFParser = require('rtf-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, 
@@ -40,18 +46,83 @@ router.get('/', function(req, res, next) {
 });
 
 /* POST follow-up questions after sending user inputs. */
-router.post('/follow_ups', async function(req, res, next) {
-  console.log(req.body);
+router.post('/follow_ups', upload.single('file'), async function(req, res, next) {
+
+  if(req.file){
+    // parse file text and extract useful info + list of topics
+    const file = req.file;
+    const fileType = req.file.mimetype;
+    var extractedText = "";
+
+    if (fileType === 'text/plain') {
+      extractedText = file.buffer.toString('utf8');
+    } else if (fileType === 'application/pdf') {
+      const pdfData = await pdfParse(file.buffer);
+      extractedText = pdfData.text;
+    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      // Handle DOCX files
+      const mammothResult = await mammoth.extractRawText({ buffer: req.file.buffer });
+      extractedText = mammothResult.value;
+    } else if (fileType === 'application/rtf') {
+      extractedText = await extractRTFText(req.file.buffer);
+    } else {
+      extractedText = 'Unsupported file type';
+    }
+
+    const documentPrompt = "In order to build a course from a document, extract relevant topics and other " + 
+      `useful information about the course. Be concise. The course name is ${req.body.courseName} Here is the document: ${extractedText}`;
+    
+    var documentInformation = "";
+    
+    const documentCompletion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are creating intuitive and engaging course content." },
+        {
+            role: "user",
+            content: documentPrompt,
+        }
+      ],
+      n: 1,
+      response_format: {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "response_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "topics": {
+                "type": "array",
+                "description": "An array of topics (if any found).",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "other_information": {
+                "type": "string",
+              }
+            },
+            "additionalProperties": false,
+          }
+        }
+      }
+    });
+
+    documentInformation = JSON.parse(documentCompletion.choices[0].message.content);
+  }
 
   var emptyFields = [];
   var fields = {
     "Learning Style": req.body.learningStyle,
     "Content Format": req.body.contentFormat,
+    "Document Information": documentInformation,
     "Included Topics": req.body.includedTopics,
     "Limited Topics": req.body.limitedTopics,
     "Logistics": req.body.courseLogistics,
     "Other Requests": req.body.otherRequests,
   }
+
+  console.log(fields);
 
   var prompt = `You are making an outline of topics for a course on ${req.body.courseName} while considering the ` +
     `following requests, if any. `;
@@ -60,10 +131,16 @@ router.post('/follow_ups', async function(req, res, next) {
     `following requests, if any. `;
 
   for(const key in fields){
-    if(fields[key] == ""){
-      if(key != "Other Requests"){
+    if(fields[key] == "" || fields[key] == undefined){
+      if(key != "Other Requests" && key != "Document Information"){
         emptyFields.push(key);
       }
+    }
+    else if(key == "Document Information"){
+      prompt += `Included Topics and style: ${fields[key]}. Note: If other request fields contradict parts of this ` + 
+        "field, use the other field information for precedence. ";
+      promptTemplate += `Included Topics and style: ${fields[key]}. Note: If other request fields contradict parts of this ` + 
+        "field, use the other field information for precedence. ";
     }
     else if(key == "Limited Topics"){
       if(fields[key] && fields["Included Topics"] != ""){
@@ -162,6 +239,10 @@ router.post('/create_course', async function(req, res, next) {
         "schema": {
           "type": "object",
             "properties": {
+              "course_description": {
+                "type": "string",
+                "description": "one sentence description of the course",
+              },
               "outline": {
                   "type": "array",
                   "items": {
@@ -173,7 +254,7 @@ router.post('/create_course', async function(req, res, next) {
                               "items": { "type": "string" }
                           }
                       },
-                      "required": ["topic", "subtopics"]
+                      "required": ["description", "topic", "subtopics"]
                   }
               }
             },

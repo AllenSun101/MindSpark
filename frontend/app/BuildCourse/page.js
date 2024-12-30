@@ -67,15 +67,23 @@ export default function BuildCourse(){
     function HandleInitialQuestions(event){
         event.preventDefault();
         setLoading(true);
+        console.log(file);
 
-        axios.post("http://localhost:3001/follow_ups", {
-            courseName: formState.courseName,
-            learningStyle: formState.learningStyle,
-            contentFormat: formState.contentFormat,
-            includedTopics: formState.includedTopics,
-            limitedTopics: isChecked,
-            courseLogistics: formState.courseLogistics,
-            otherRequests: formState.otherRequests,
+        const formData = new FormData();
+
+        formData.append("courseName", formState.courseName);
+        formData.append("learningStyle", formState.learningStyle);
+        formData.append("contentFormat", formState.contentFormat);
+        formData.append("file", file);
+        formData.append("includedTopics", formState.includedTopics);
+        formData.append("limitedTopics", isChecked);
+        formData.append("courseLogistics", formState.courseLogistics);
+        formData.append("otherRequests", formState.otherRequests);
+
+        axios.post("http://localhost:3001/follow_ups", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data", 
+            },
         })
         .then(response => {
             console.log(response.data);
