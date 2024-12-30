@@ -222,7 +222,7 @@ router.post('/create_course', async function(req, res, next) {
 
   console.log(outlinePrompt);
 
-  const completion = await openai.chat.completions.create({
+  var completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
         { role: "system", content: "You are creating intuitive and engaging course content." },
@@ -265,7 +265,7 @@ router.post('/create_course', async function(req, res, next) {
     }
   });
 
-  const outline = JSON.parse(completion.choices[0].message.content);
+  var outline = JSON.parse(completion.choices[0].message.content);
   console.log(outline);
 
   var content = [];
@@ -324,6 +324,22 @@ router.post('/create_course', async function(req, res, next) {
     const topicContent = JSON.parse(completion.choices[0].message.content);
     content.push(topicContent);
     console.log("YEET");
+  }
+
+  // Add completion status
+  for(let i = 0; i < outline.outline.length; i++){
+    const tempTopic = outline.outline[i].topic;
+    outline.outline[i].topic = {
+      "topic": tempTopic,
+      "status": "incomplete"
+    };
+    for(let j = 0; j < outline.outline[i].subtopics.length; j++){
+      const tempSubtopic = outline.outline[i].subtopics[j];
+      outline.outline[i].subtopics[j] = {
+        "subtopic": tempSubtopic,
+        "status": "incomplete"
+      };
+    }
   }
 
   const dbName = "MindSpark";
@@ -506,11 +522,13 @@ router.get('/get_outline', async function(req, res, next) {
 
     var course_name = "";
     var course_outline = {"course_outline": []};
+    var course_description = "";
     var status = "Success";
 
     if (record) {
       course_name = record.course_name;
       course_outline = record.course_outline.outline;
+      course_description = record.course_outline.course_description;
     } else {
       status = "Fail"
     }
@@ -523,7 +541,7 @@ router.get('/get_outline', async function(req, res, next) {
     await client.close();
   }
 
-  res.json( {course_name: course_name, course_outline: course_outline, status: status} );
+  res.json( {course_name: course_name, course_outline: course_outline, course_description: course_description, status: status} );
 
 });
 
@@ -543,13 +561,15 @@ router.get('/get_content', async function(req, res, next) {
     const record = await collection.findOne({ _id: new ObjectId(courseId) });
 
     var topic_data = {"topic": {},"subtopics": []};
+    var outline_data = {"topic": {},"subtopics": []};
     var status = "Success";
 
     if (record) {
       topic_data = record.course_content[topicIndex]
+      outline_data = record.course_outline.outline[topicIndex]
     } else {
       status = "Fail"
-    }
+    }    
   } 
   catch(error){
     console.error('Error fetching course content:', error);
@@ -559,7 +579,7 @@ router.get('/get_content', async function(req, res, next) {
     await client.close();
   }
 
-  res.json( {topic_data: topic_data.topic, subtopics: topic_data.subtopics, status: status} );
+  res.json( {topic_data: topic_data.topic, subtopics: topic_data.subtopics, topic_status: outline_data.topic, subtopic_status: outline_data.subtopics, status: status} );
 
 });
 
@@ -607,6 +627,72 @@ router.delete('/delete_course', async function(req, res, next) {
   }
 
   res.json( {status: status} );
+});
+
+router.patch('/update_completion_status', async function(req, res, next) {
+  const dbName = "MindSpark";
+  const collectionName = "Courses";
+  var status = "Success";
+
+  const courseId = req.body.courseId;
+  const topicIndex = req.body.topicIndex;
+  const subtopicIndex = req.body.subtopicIndex;
+  const updatedStatus = req.body.updatedStatus;
+
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+
+    const filter = { _id: new ObjectId(courseId) };
+    const update = { 
+      $set: {
+        [`course_outline.outline.${topicIndex}.subtopics.${subtopicIndex}.status`]: updatedStatus
+      } 
+    };
+
+    const updateReferenceResult = await collection.findOneAndUpdate(
+      filter,
+      update,
+      { returnDocument: "after" }
+    );
+
+    var status_data = updateReferenceResult.course_outline.outline[topicIndex];
+
+    //update overall topic completion status if necessary
+    var amountComplete = 0;
+    for(const subtopic of status_data.subtopics){
+      if(subtopic.status == 'complete'){
+        amountComplete ++;
+      }
+    }
+
+    var topicCompletionStatus = (amountComplete == 0 ? "incomplete" : amountComplete == status_data.subtopics.length ? "complete" : "in progress");
+    if(topicCompletionStatus != status_data.topic.status){
+      const topicUpdate = { 
+        $set: {
+          [`course_outline.outline.${topicIndex}.topic.status`]: topicCompletionStatus
+        } 
+      };
+
+      const updatedResult = await collection.findOneAndUpdate(
+        filter,
+        topicUpdate,
+        { returnDocument: "after" }
+      );
+
+      status_data = updatedResult.course_outline.outline[topicIndex];
+    }
+  } 
+  catch(error){
+    console.error('Error updating completion status:', error);
+    status = "Fail"
+  }
+  finally {
+    await client.close();
+  }
+
+  res.json( {topic_status: status_data.topic, subtopic_status: status_data.subtopics, status: status} );
 });
 
 module.exports = router;

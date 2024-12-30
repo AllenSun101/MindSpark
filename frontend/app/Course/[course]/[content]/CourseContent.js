@@ -2,15 +2,35 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import axios from "axios";
 
 export default function CourseContent({data, courseId, topicIndex, subtopicIndex}){
 
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [selectedSubtopic, setSelectedSubtopic] = useState(Number(subtopicIndex));
+    const [topicStatus, setTopicStatus] = useState(data.topic_status.status);
+    const [subtopicStatus, setSubtopicStatus] = useState(data.subtopic_status);
 
     const topic = data.topic_data.topic_name;
 
     const subtopics = data.subtopics;
+
+    const updateCompletionStatus = () => {
+        axios.patch("http://localhost:3001/update_completion_status", {
+            courseId: courseId,
+            topicIndex: topicIndex,
+            subtopicIndex: selectedSubtopic,
+            updatedStatus: subtopicStatus[selectedSubtopic].status === 'complete' ? "incomplete" : "complete"
+        })
+        .then(response => {
+            console.log(response.data);
+            setTopicStatus(response.data.topic_status.status);
+            setSubtopicStatus(response.data.subtopic_status);
+        })
+        .catch(error => {
+            console.log(error);
+        })
+    }
 
     return(
         <div className="flex flex-row">
@@ -56,14 +76,17 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                     </button>
                 </Link>
                 <div>
-                    <div className="flex items-center space-x-4 mb-6">
+                    <div className="flex items-center space-x-4 mb-2">
                         <h1 className="text-2xl font-semibold">{subtopics[selectedSubtopic].subtopic_name}</h1>
-                        {subtopics[selectedSubtopic].status === 'complete' && (
+                        {subtopicStatus[selectedSubtopic].status === 'complete' && (
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="green" className="w-6 h-6">
                                 <path d="M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L369 209z"/>
                             </svg>
                         )}
                     </div>
+                    <button className="mb-6 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] px-4 py-2 rounded-xl" onClick={updateCompletionStatus}>
+                        {subtopicStatus[selectedSubtopic].status === 'complete' ? "Mark Incomplete" : "Mark Complete"}
+                    </button>
                     <p className="min-h-[20vh]">{subtopics[selectedSubtopic].subtopic_content}</p>
                 </div>
                 <div className="mt-16 flex justify-between">

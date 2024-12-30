@@ -14,9 +14,8 @@ export default function CourseHomePage({data, courseId, session}){
     const [deleteResult, setDeleteResult] = useState();
 
     const courseName = data.course_name
-    const courseDescription = "No Description";
+    const courseDescription = data.course_description;
 
-    //0 = incomplete, 1 = in progress, 2 = complete
     const topics = data.course_outline;
 
     const handleDeleteCourse = async () => {
@@ -41,13 +40,13 @@ export default function CourseHomePage({data, courseId, session}){
     function DisplayTopic(){
         return(
             <div>
-                <h1 className="text-2xl font-semibold mb-4">{topics[selectedTopic].topic}</h1>
+                <h1 className="text-2xl font-semibold mb-4">{topics[selectedTopic].topic.topic}</h1>
                 {topics[selectedTopic].subtopics.map((_, id) => (
                     <div key={id} className="flex items-center space-x-2 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[selectedTopic].subtopics[id].status === "complete" ? "green" : "gray"}`} className="w-3 h-3">
                             <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
                         </svg>
-                        <Link href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: id } }}>{topics[selectedTopic].subtopics[id]}</Link>
+                        <Link href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic.topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: id } }}>{topics[selectedTopic].subtopics[id].subtopic}</Link>
                     </div>
                 ))}
             </div>
@@ -117,10 +116,10 @@ export default function CourseHomePage({data, courseId, session}){
                                     className={`${selectedTopic == id ? "border-blue-500" : "border-transparent"} border px-2 py-1 w-full justify-start flex items-center space-x-2`}
                                     onClick={() => {setSelectedTopic(id); setSelectedOption("content")}}
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[id].status === 0 ? "gray" : topics[id].status === 1 ? "yellow" : "green"}`} className="w-3 h-3 flex-shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[id].topic.status === "incomplete" ? "gray" : topics[id].topic.status === "in progress" ? "yellow" : "green"}`} className="w-3 h-3 flex-shrink-0">
                                             <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
                                         </svg>
-                                        <span className="text-left">Topic {id + 1}: {topics[id].topic}</span>
+                                        <span className="text-left">Topic {id + 1}: {topics[id].topic.topic}</span>
                                     </button>
                                 ))}
                             </div>
