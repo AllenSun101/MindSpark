@@ -10,7 +10,11 @@ export default function Chatbot({ data, topicIndex, subtopicIndex }) {
   const [userPrompt, setUserPrompt] = useState("");
 
   var pageContent = "";
-  if(data?.subtopics[subtopicIndex]?.subtopic_content){
+  console.log(data);
+  if(subtopicIndex == -1 && data?.topic_data?.topic_content){
+    pageContent = data.topic_data.topic_content;
+  }
+  else if(data?.subtopics[subtopicIndex]?.subtopic_content){
     pageContent = data.subtopics[subtopicIndex].subtopic_content;
   }
 
@@ -107,13 +111,13 @@ export default function Chatbot({ data, topicIndex, subtopicIndex }) {
 
           {/* Input Field */}
           <div className="mt-4 flex items-center space-x-2">
-            <input
-              type="text"
+            <textarea
+              rows="2"
               className="flex-1 border rounded-lg p-2"
               placeholder="Type your message..."
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && GetResponse()}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && GetResponse()}
             />
           </div>
         </div>
