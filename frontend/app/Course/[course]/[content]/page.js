@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import CourseContent from "./CourseContent";
+import Chatbot from "./Chatbot";
 
 export default function Content(){
 
@@ -46,6 +47,7 @@ export default function Content(){
     
     return (
         <div>
+            <Chatbot data={topicContent} topicIndex={topicIndex} subtopicIndex={subtopicIndex}/>
             {topicContent && (
                 <CourseContent data={topicContent} courseId={courseId} topicIndex={topicIndex} subtopicIndex={subtopicIndex}/>
             )}        
