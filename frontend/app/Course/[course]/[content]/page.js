@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from "next-auth/react";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import CourseContent from "./CourseContent";
@@ -18,6 +18,21 @@ export default function Content(){
 
     const [topicContent, setTopicContent] = useState();
 
+    useEffect(() => {
+        const fetchContent = async () => {
+            const { data } = await axios.get("http://localhost:3001/get_content", {
+                params: {
+                    courseId: courseId,
+                    topicIndex: topicIndex
+                }
+            })
+            setTopicContent(data);
+        }
+        
+        if (session) {
+            fetchContent();
+        }
+    }, [session]);
 
     if(!session?.user){
         return(
@@ -28,29 +43,20 @@ export default function Content(){
             </div>
         )
     }
-
-    const fetchContent = async () => {
-        const { data } = await axios.get("http://localhost:3001/get_content", {
-            params: {
-                courseId: courseId,
-                topicIndex: topicIndex
-            }
-        })
-        if(!topicContent){
-            setTopicContent(data);
-        }
-    }
-
     if(!topicContent){
-        fetchContent();
+        return(
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <div className="mt-40 mb-40 text-center">
+                    <p>Loading...</p>
+                </div>
+            </div>
+        )
     }
     
     return (
         <div>
             <Chatbot data={topicContent} topicIndex={topicIndex} subtopicIndex={subtopicIndex}/>
-            {topicContent && (
-                <CourseContent data={topicContent} courseId={courseId} topicIndex={topicIndex} subtopicIndex={subtopicIndex}/>
-            )}        
+            <CourseContent data={topicContent} courseId={courseId} topicIndex={topicIndex} subtopicIndex={subtopicIndex}/> 
         </div>
     )
 }

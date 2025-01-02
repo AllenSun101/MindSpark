@@ -45,7 +45,7 @@ export default function CourseHomePage({data, courseId, session}){
                 </div>
                 {topics[selectedTopic].subtopics.map((_, id) => (
                     <div key={id} className="flex items-center space-x-2 p-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[selectedTopic].subtopics[id].status === "complete" ? "green" : "gray"}`} className="w-3 h-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[selectedTopic].subtopics[id].status === "complete" ? "green" : "gray"}`} className="w-3 h-3 flex-shrink-0">
                             <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
                         </svg>
                         <Link href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic.topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: id } }}>{topics[selectedTopic].subtopics[id].subtopic}</Link>
@@ -60,16 +60,16 @@ export default function CourseHomePage({data, courseId, session}){
             <div>
                 <h1 className="text-2xl font-semibold mb-4">Grades</h1>
                 <div className="flex w-full my-2">
-                    <div className="col-span-4 font-semibold" style={{ width: "70%" }}>Assignment</div>
-                    <div className="col-span-1 text-center font-semibold" style={{ width: "15%" }}>Weight</div>
-                    <div className="col-span-1 text-center font-semibold" style={{ width: "15%" }}>Grade</div>
+                    <div className="font-semibold" style={{ width: "70%" }}>Assignment</div>
+                    <div className="text-center font-semibold" style={{ width: "15%" }}>Weight</div>
+                    <div className="text-center font-semibold" style={{ width: "15%" }}>Grade</div>
                 </div>
                 <hr/>
                 {Object.keys(grades).map((id) => (
                     <div key={id} className="flex w-full my-2">
-                        <div className="col-span-4" style={{ width: "70%" }}>{grades[id].assignment}</div>
-                        <div className="col-span-1 text-center" style={{ width: "15%" }}>{grades[id].weight}</div>
-                        <div className="col-span-1 text-center" style={{ width: "15%" }}>{grades[id].grade === -1 ? "---" : grades[id].grade}</div>
+                        <div style={{ width: "70%" }}>{grades[id].assignment}</div>
+                        <div className="text-center" style={{ width: "15%" }}>{grades[id].weight}</div>
+                        <div className="text-center" style={{ width: "15%" }}>{grades[id].grade === -1 ? "---" : grades[id].grade}</div>
                     </div>
                 ))}
             </div>
@@ -77,9 +77,56 @@ export default function CourseHomePage({data, courseId, session}){
     }
 
     function DisplayStats(){
+        var statsMap = {};
+        var totalSubtopicsComplete = 0;
+        var totalSubtopics = 0;
+        for(const topic of topics){
+            const topicName = topic.topic.topic;
+            const status = topic.topic.status;
+            if(status == 'complete'){
+                statsMap[topicName] = [topic.subtopics.length, topic.subtopics.length];
+                totalSubtopicsComplete += topic.subtopics.length;
+                totalSubtopics += topic.subtopics.length;
+            }
+            else if(status == 'incomplete'){
+                statsMap[topicName] = [0, topic.subtopics.length];
+                totalSubtopics += topic.subtopics.length;
+            }
+            else{
+                var subtopicsComplete = 0;
+                for(const subtopic of topic.subtopics){
+                    if(subtopic.status == 'complete'){
+                        subtopicsComplete ++;
+                    }
+                }
+                statsMap[topicName] = [subtopicsComplete, topic.subtopics.length];
+                totalSubtopicsComplete += subtopicsComplete;
+                totalSubtopics += topic.subtopics.length;
+            }
+        }
+        console.log(statsMap);
         return(
             <div>
                 <h1 className="text-2xl font-semibold mb-4">Completion Statistics</h1>
+                <div className="flex w-full my-2">
+                    <div className="font-semibold" style={{ width: "60%" }}>Topic</div>
+                    <div className="text-center font-semibold" style={{ width: "20%" }}>Completed</div>
+                    <div className="text-center font-semibold" style={{ width: "20%" }}>Percentage</div>
+                </div>
+                <hr/>
+                {Object.keys(statsMap).map((topic) => (
+                    <div key={topic} className="flex w-full my-2">
+                        <div style={{ width: "60%" }}>{topic}</div>
+                        <div className="text-center" style={{ width: "20%" }}>{statsMap[topic][0]}/{statsMap[topic][1]}</div>
+                        <div className="text-center" style={{ width: "20%" }}>{(statsMap[topic][0] / statsMap[topic][1] * 100).toFixed(2)}%</div>
+                    </div>
+                ))}
+                <hr/>
+                <div className="flex w-full my-2">
+                    <div className="font-semibold" style={{ width: "60%" }}>Total</div>
+                    <div className="text-center font-semibold" style={{ width: "20%" }}>{totalSubtopicsComplete}/{totalSubtopics}</div>
+                    <div className="text-center font-semibold" style={{ width: "20%" }}>{(totalSubtopicsComplete / totalSubtopics * 100).toFixed(2)}%</div>
+                </div>
             </div>
         );
     }
