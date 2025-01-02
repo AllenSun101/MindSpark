@@ -46,6 +46,11 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                     </div>
                     <hr className="my-2 border-gray-600"/>
                     <div className="px-2">
+                        <div className={`px-1 py-2 ${selectedSubtopic == -1 ? "text-blue-400" : ""}`}>
+                            <Link href={{query: { course_id: courseId, topic: topicIndex, subtopic: -1 } }}>
+                                <button onClick={() => {setSelectedSubtopic(-1)}} className="text-left">Topic Overview</button>
+                            </Link>
+                        </div>
                         {subtopics.map((_, id) => (
                             <div key={id} className={`px-1 py-2 ${id == selectedSubtopic ? "text-blue-400" : ""}`}>
                                 <Link href={{query: { course_id: courseId, topic: topicIndex, subtopic: id } }}>
@@ -76,22 +81,34 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                     </button>
                 </Link>
                 <div>
-                    <div className="flex items-center space-x-4 mb-2">
-                        <h1 className="text-2xl font-semibold">{subtopics[selectedSubtopic].subtopic_name}</h1>
-                        {subtopicStatus[selectedSubtopic].status === 'complete' && (
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="green" className="w-6 h-6">
-                                <path d="M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L369 209z"/>
-                            </svg>
-                        )}
-                    </div>
-                    <button className="mb-6 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] px-4 py-2 rounded-xl" onClick={updateCompletionStatus}>
-                        {subtopicStatus[selectedSubtopic].status === 'complete' ? "Mark Incomplete" : "Mark Complete"}
-                    </button>
-                    <p className="min-h-[20vh]">{subtopics[selectedSubtopic].subtopic_content}</p>
+                    {selectedSubtopic == -1 && (
+                        <div>
+                            <div className="flex items-center space-x-4 mb-6">
+                                <h1 className="text-2xl font-semibold">Topic Overview</h1>
+                            </div>
+                            <p className="min-h-[20vh]">{data.topic_data.topic_content}</p>
+                        </div>
+                    )}
+                    {selectedSubtopic != -1 && (
+                        <div>
+                            <div className="flex items-center space-x-4 mb-2">
+                                <h1 className="text-2xl font-semibold">{subtopics[selectedSubtopic].subtopic_name}</h1>
+                                {subtopicStatus[selectedSubtopic].status === 'complete' && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="green" className="w-6 h-6">
+                                        <path d="M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L369 209z"/>
+                                    </svg>
+                                )}
+                            </div>
+                            <button className="mb-6 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] px-4 py-2 rounded-xl" onClick={updateCompletionStatus}>
+                                {subtopicStatus[selectedSubtopic].status === 'complete' ? "Mark Incomplete" : "Mark Complete"}
+                            </button>
+                            <p className="min-h-[20vh]">{subtopics[selectedSubtopic].subtopic_content}</p>
+                        </div>
+                    )}
                 </div>
                 <div className="mt-16 flex justify-between">
                     <Link href={{query: { course_id: courseId, topic: topicIndex, subtopic: selectedSubtopic - 1 } }}>
-                        <button onClick={() => {setSelectedSubtopic(selectedSubtopic - 1)}} disabled={subtopicIndex == 0} className="flex items-center space-x-1">
+                        <button onClick={() => {setSelectedSubtopic(selectedSubtopic - 1)}} disabled={subtopicIndex == -1} className="flex items-center space-x-1">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" className="w-4 h-4">
                                 <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"/>
                             </svg>

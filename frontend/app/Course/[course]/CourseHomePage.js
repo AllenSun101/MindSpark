@@ -40,7 +40,9 @@ export default function CourseHomePage({data, courseId, session}){
     function DisplayTopic(){
         return(
             <div>
-                <h1 className="text-2xl font-semibold mb-4">{topics[selectedTopic].topic.topic}</h1>
+                <div className="mb-4">
+                    <Link className="text-2xl font-semibold" href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic.topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: -1 } }}>{topics[selectedTopic].topic.topic}</Link>
+                </div>
                 {topics[selectedTopic].subtopics.map((_, id) => (
                     <div key={id} className="flex items-center space-x-2 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[selectedTopic].subtopics[id].status === "complete" ? "green" : "gray"}`} className="w-3 h-3">
