@@ -8,7 +8,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
 
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [selectedSubtopic, setSelectedSubtopic] = useState(Number(subtopicIndex));
-    const [topicStatus, setTopicStatus] = useState(data.topic_status.status);
+    // const [topicStatus, setTopicStatus] = useState(data.topic_status.status);
     const [subtopicStatus, setSubtopicStatus] = useState(data.subtopic_status);
 
     const topic = data.topic_data.topic_name;

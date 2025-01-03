@@ -69,7 +69,7 @@ export default function MyCourses() {
     if (courses.length === 0) {
         return (
             <div className="container mx-auto px-8 lg:px-16 py-12">
-                <h1 className="text-center font-semibold text-3xl mb-6">{session.user.name}'s Courses</h1>
+                <h1 className="text-center font-semibold text-3xl mb-6">{session.user.name}&apos;s Courses</h1>
                 <div className="mt-40 mb-20 text-center">
                     <p className="mb-4">No courses currently. Create one here!</p>
                     <Link href={"/BuildCourse"}>
@@ -84,7 +84,7 @@ export default function MyCourses() {
 
     return (
         <div className="container mx-auto px-8 lg:px-16 py-12">
-            <h1 className="text-center font-semibold text-3xl mb-6">{session.user.name}'s Courses</h1>
+            <h1 className="text-center font-semibold text-3xl mb-6">{session.user.name}&apos;s Courses</h1>
             <div className="mb-6">
                 <input
                     type="text"

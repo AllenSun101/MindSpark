@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/react/24/solid';
 import axios from 'axios';
 
-export default function Chatbot({ data, topicIndex, subtopicIndex }) {
+export default function Chatbot({ data, subtopicIndex }) {
   const [isOpen, setIsOpen] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
   const [userPrompt, setUserPrompt] = useState("");
@@ -22,7 +22,7 @@ export default function Chatbot({ data, topicIndex, subtopicIndex }) {
   const chatRef = useRef(null);
   const chatIconRef = useRef(null);
 
-  function GetResponse(event){
+  function GetResponse(){
     if(userPrompt != ""){
       axios.post("http://localhost:3001/chatbot/", {
         pageContent: pageContent,

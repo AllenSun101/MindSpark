@@ -60,7 +60,7 @@ export default function BuildCourse(){
         setFile(selectedFile);
     };
 
-    const handleToggle = (event) => {
+    const handleToggle = () => {
         setIsChecked(prev => !prev);
     };
 

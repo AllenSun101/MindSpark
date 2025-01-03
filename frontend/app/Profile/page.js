@@ -2,7 +2,7 @@
 
 import axios from "axios"
 import { useSession } from "next-auth/react"
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 export default function Profile(){
     // fetch profile info, create document it not exist

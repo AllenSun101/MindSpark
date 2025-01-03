@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react"
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 
 export default function Navbar() {
@@ -19,14 +20,14 @@ export default function Navbar() {
   return (
     <div className="bg-blue-500">
       <nav className="relative px-4 py-4 flex justify-between items-center bg-white">
-        <a className="text-3xl font-bold leading-none" href="/">
+        <Link className="text-3xl font-bold leading-none" href="/">
           <Image
             src="/Logo.png"
             width={200}
             height={50}
             alt="MindSpark Logo"
           />
-        </a>
+        </Link>
         <div className="lg:hidden">
           <button
             className="navbar-burger flex items-center text-blue-600 p-3"
@@ -44,9 +45,9 @@ export default function Navbar() {
         </div>
         <ul className="hidden absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 lg:flex lg:mx-auto lg:flex lg:items-center lg:w-auto lg:space-x-6">
           <li>
-            <a className={path == "/MyCourses" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/MyCourses">
+            <Link className={path == "/MyCourses" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/MyCourses">
               My Courses
-            </a>
+            </Link>
           </li>
           <li className="text-gray-500">
             <svg
@@ -65,9 +66,9 @@ export default function Navbar() {
             </svg>
           </li>
           <li>
-            <a className={path == "/BuildCourse" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/BuildCourse">
+            <Link className={path == "/BuildCourse" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/BuildCourse">
               Build Course
-            </a>
+            </Link>
           </li>
           <li className="text-gray-500">
               <svg
@@ -86,9 +87,9 @@ export default function Navbar() {
               </svg>
           </li>
           <li>
-            <a className={path == "/Profile" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/Profile">
+            <Link className={path == "/Profile" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/Profile">
               Profile
-            </a>
+            </Link>
           </li>
           <li className="text-gray-500">
               <svg
@@ -107,9 +108,9 @@ export default function Navbar() {
               </svg>
           </li>
           <li>
-              <a className={path == "/Pricing" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/Pricing">
+              <Link className={path == "/Pricing" ? "text-sm font-semibold text-blue-600" : "text-sm text-gray-700"} href="/Pricing">
               Pricing
-              </a>
+              </Link>
           </li>
         </ul>
         {
@@ -130,14 +131,14 @@ export default function Navbar() {
           <div className="navbar-backdrop fixed inset-0 bg-gray-800 opacity-25"></div>
           <nav className="fixed top-0 left-0 bottom-0 flex flex-col w-5/6 max-w-sm py-6 px-6 bg-white border-r overflow-y-auto">
             <div className="flex items-center mb-8">
-              <a className="mr-auto text-3xl font-bold leading-none" href="/">
+              <Link className="mr-auto text-3xl font-bold leading-none" href="/">
                 <Image
                   src="/Logo.png"
                   width={200}
                   height={50}
                   alt="MindSpark Logo"
                 />
-              </a>
+              </Link>
               <button
                 className="navbar-close"
                 onClick={toggleMenu}
@@ -157,36 +158,36 @@ export default function Navbar() {
             </div>
             <ul>
               <li>
-                <a 
+                <Link 
                   className= {path == "/MyCourses" ? "block px-4 py-2 hover:bg-gray-50 font-semibold text-blue-600" : "block px-4 py-2 hover:bg-gray-50 text-gray-700"}
                   href="/MyCourses"
                 >
                   My Courses
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   className={path == "/BuildCourse" ? "block px-4 py-2 hover:bg-gray-50 font-semibold text-blue-600" : "block px-4 py-2 hover:bg-gray-50 text-gray-700"}
                   href="/BuildCourse"
                 >
                   Build Course
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   className={path == "/Profile" ? "block px-4 py-2 hover:bg-gray-50 font-semibold text-blue-600" : "block px-4 py-2 hover:bg-gray-50 text-gray-700"}
                   href="/Profile"
                 >
                   Profile
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   className={path == "/Pricing" ? "block px-4 py-2 hover:bg-gray-50 font-semibold text-blue-600" : "block px-4 py-2 hover:bg-gray-50 text-gray-700"}
                   href="/Pricing"
                 >
                   Pricing
-                </a>
+                </Link>
               </li>
             </ul>
             {
