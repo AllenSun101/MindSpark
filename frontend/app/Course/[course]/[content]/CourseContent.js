@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import axios from "axios";
+import Markdown from "react-markdown";
+import React from "react";
 
 export default function CourseContent({data, courseId, topicIndex, subtopicIndex}){
 
@@ -24,7 +26,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
         })
         .then(response => {
             console.log(response.data);
-            setTopicStatus(response.data.topic_status.status);
+            //setTopicStatus(response.data.topic_status.status);
             setSubtopicStatus(response.data.subtopic_status);
         })
         .catch(error => {
@@ -91,7 +93,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                     )}
                     {selectedSubtopic != -1 && (
                         <div>
-                            <div className="flex items-center space-x-4 mb-2">
+                            <div className="flex items-center space-x-4 mb-3">
                                 <h1 className="text-2xl font-semibold">{subtopics[selectedSubtopic].subtopic_name}</h1>
                                 {subtopicStatus[selectedSubtopic].status === 'complete' && (
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="green" className="w-6 h-6">
@@ -99,10 +101,20 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                                     </svg>
                                 )}
                             </div>
-                            <button className="mb-6 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] px-4 py-2 rounded-xl" onClick={updateCompletionStatus}>
+                            <button className="mb-8 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] px-4 py-2 rounded-xl" onClick={updateCompletionStatus}>
                                 {subtopicStatus[selectedSubtopic].status === 'complete' ? "Mark Incomplete" : "Mark Complete"}
                             </button>
-                            <p className="min-h-[20vh]">{subtopics[selectedSubtopic].subtopic_content}</p>
+                            <div className="min-h-[20vh] mx-8">
+                                <Markdown className="space-y-6" components={{
+                                    ul: ({ children }) => <ul className="list-disc pl-6 space-y-6">{children}</ul>,
+                                    ol: ({ children }) => <ol className="list-decimal pl-6 space-y-6">{children}</ol>,
+                                    li: ({ children }) => <li className="space-y-6">{children}</li>,
+                                    pre: ({ children }) => <pre className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-8 mx-16 rounded-xl overflow-x-auto">{React.Children.map(children, (child) => React.cloneElement(child, { isInsidePre: true }))}</pre>,
+                                    code: ({ children, isInsidePre }) => (<code className={`${isInsidePre ? "" : "bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-1 rounded-lg inline-block"}`}>{children}</code>),
+                                }}>
+                                    {subtopics[selectedSubtopic].subtopic_content}
+                                </Markdown>
+                            </div>
                         </div>
                     )}
                 </div>
