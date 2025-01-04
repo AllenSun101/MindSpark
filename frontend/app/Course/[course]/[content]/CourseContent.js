@@ -105,12 +105,12 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                                 {subtopicStatus[selectedSubtopic].status === 'complete' ? "Mark Incomplete" : "Mark Complete"}
                             </button>
                             <div className="min-h-[20vh] mx-8">
-                                <Markdown className="space-y-6" components={{
-                                    ul: ({ children }) => <ul className="list-disc pl-6 space-y-6">{children}</ul>,
-                                    ol: ({ children }) => <ol className="list-decimal pl-6 space-y-6">{children}</ol>,
-                                    li: ({ children }) => <li className="space-y-6">{children}</li>,
-                                    pre: ({ children }) => <pre className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-8 mx-16 rounded-xl overflow-x-auto">{React.Children.map(children, (child) => React.cloneElement(child, { isInsidePre: true }))}</pre>,
-                                    code: ({ children, isInsidePre }) => (<code className={`${isInsidePre ? "" : "bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-1 rounded-lg inline-block"}`}>{children}</code>),
+                                <Markdown className="space-y-4" components={{
+                                    ul: ({ children }) => <ul className="list-disc pl-6 space-y-4">{children}</ul>,
+                                    ol: ({ children }) => <ol className="list-decimal pl-6 space-y-4">{children}</ol>,
+                                    li: ({ children }) => <li className="space-y-4">{children}</li>,
+                                    pre: ({ children }) => <pre className="bg-gray-300 p-8 mx-16 rounded-xl overflow-x-auto">{React.Children.map(children, (child) => React.cloneElement(child, { isInsidePre: true }))}</pre>,
+                                    code: ({ children, isInsidePre }) => (<code className={`${isInsidePre ? "" : "bg-gray-300 p-1 rounded-lg inline-block"}`}>{children}</code>),
                                 }}>
                                     {subtopics[selectedSubtopic].subtopic_content}
                                 </Markdown>
