@@ -13,6 +13,8 @@ export default function CourseHomePage({data, courseId, session}){
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [deleteResult, setDeleteResult] = useState();
 
+    const [showRegenerateCourse, setShowRegenerateCourse] = useState(false);
+
     const courseName = data.course_name
     const courseDescription = data.course_description;
 
@@ -23,6 +25,19 @@ export default function CourseHomePage({data, courseId, session}){
             params: {
                 email: session.user.email,
                 courseId: courseId
+            }
+        })
+        console.log(data)
+        setShowDeleteConfirmation(false);
+        setDeleteResult(data.status);
+    };
+
+    const handleRegenerateCourse = async (event) => {
+        const { data } = await axios.post("http://localhost:3001/regenerate_course", {
+            params: {
+                email: session.user.email,
+                courseId: courseId,
+                newRequest: event.target.regenerateRequests.value,
             }
         })
         console.log(data)
@@ -48,7 +63,7 @@ export default function CourseHomePage({data, courseId, session}){
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={`${topics[selectedTopic].subtopics[id].status === "complete" ? "green" : "gray"}`} className="w-3 h-3 flex-shrink-0">
                             <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z"/>
                         </svg>
-                        <Link href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic.topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: id } }}>{topics[selectedTopic].subtopics[id].subtopic}</Link>
+                        <Link href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic.topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: id } }}>{topics[selectedTopic].subtopics[id].subtopic.subtopic}</Link>
                     </div>
                 ))}
             </div>
@@ -135,11 +150,20 @@ export default function CourseHomePage({data, courseId, session}){
         return(
             <div>
                 <h1 className="text-2xl font-semibold mb-4">Course Settings</h1>
-                <button className="bg-red-500 hover:bg-red-600 p-2 rounded-lg"
-                onClick={() => {setShowDeleteConfirmation(true)}}
-                >
-                    Delete Course
-                </button>
+                <div>
+                    <button className="mb-4 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-2 rounded-lg"
+                    onClick={() => {setShowRegenerateCourse(true)}}
+                    >
+                        Regenerate Course
+                    </button>
+                </div>
+                <div>
+                    <button className="bg-red-500 hover:bg-red-600 p-2 rounded-lg"
+                    onClick={() => {setShowDeleteConfirmation(true)}}
+                    >
+                        Delete Course
+                    </button>
+                </div>
             </div>
         );
     }
@@ -198,6 +222,33 @@ export default function CourseHomePage({data, courseId, session}){
                     <button
                         className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
                         onClick={() => {setShowDeleteConfirmation(false)}}
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </div>
+                </div>
+            )}
+
+            {showRegenerateCourse && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-100">
+                    <p className="text-lg mb-2 text-center">Enter new requests and any changes that should be made:</p>
+                    <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2 mb-2" 
+                        name="regenerateRequests" 
+                        rows="5"
+                    >
+                    </textarea>
+                    <div className="flex justify-between">
+                    <button
+                        className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg"
+                        onClick={handleRegenerateCourse}
+                    >
+                        Regenerate
+                    </button>
+                    <button
+                        className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
+                        onClick={() => {setShowRegenerateCourse(false)}}
                     >
                         Cancel
                     </button>

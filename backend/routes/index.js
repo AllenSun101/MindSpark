@@ -127,8 +127,7 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
   var prompt = `You are making an outline of topics for a course on ${req.body.courseName} while considering the ` +
     `following requests, if any. `;
 
-  var promptTemplate = `for a course on ${req.body.courseName} while considering the ` +
-    `following requests, if any. `;
+  var promptFields = {};
 
   for(const key in fields){
     if(fields[key] == "" || fields[key] == undefined){
@@ -139,22 +138,22 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
     else if(key == "Document Information"){
       prompt += `Included Topics and style: ${fields[key]}. Note: If other request fields contradict parts of this ` + 
         "field, use the other field information for precedence. ";
-      promptTemplate += `Included Topics and style: ${fields[key]}. Note: If other request fields contradict parts of this ` + 
-        "field, use the other field information for precedence. ";
+      promptFields["Included Topics and style"] = fields[key] + " Note: If other request fields contradict parts of this " +
+        "field, use the other field information for precedence.";
     }
     else if(key == "Limited Topics"){
       if(fields[key] && fields["Included Topics"] != ""){
         prompt += "Do not include additional topics. ";
-        promptTemplate += "Do not include additional topics. ";
+        promptFields["Additional Topics"] = "Do not include additional topics.";
       }
       else if(!fields[key] && fields["Included Topics"] != ""){
         prompt += "Include additional relevant topics as needed. ";
-        promptTemplate += "Include additional relevant topics as needed. ";
+        promptFields["Additional Topics"] = "Include additional relevant topics as needed.";
       }
     }
     else{
       prompt += `${key}: ${fields[key]}. `;
-      promptTemplate += `${key}: ${fields[key]}. `;
+      promptFields[key] = fields[key];
     }
   }
     
@@ -195,31 +194,67 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
   });
 
   const response = JSON.parse(completion.choices[0].message.content);
-  res.json( {prompt: promptTemplate, response: response["questions"]} );
+  res.json( {prompt: promptFields, response: response["questions"]} );
 });
-
 
 /* POST create course and topics list. */
 router.post('/create_course', async function(req, res, next) {
   console.log(req.body);
-  var basicPrompt = req.body.previousPrompt + 
-  "At the moment, you don't have audio or visual content support. You also cannot do peer or interactive " + 
-  "activities. Additionally, here are some clarifying questions and answers. Consider the answers if given. ";
-  
-  const addedQs = req.body.questions;
-  const courseName = req.body.courseName;
+
   const email = req.body.email;
   const name = req.body.name;
-  
-  for (const key in addedQs) {
-    if(addedQs[key] != ""){
-      basicPrompt += `${key}: ${addedQs[key]} `;
+  const courseName = req.body.courseName;
+
+  // filter out questions with response
+  const filteredQuestions = Object.fromEntries(
+    Object.entries(req.body.questions).filter(([key, value]) => value !== "" && value !== undefined)
+  );
+
+  // handle empty either, or both. Depth vs breadth in discussion points vs topics.
+
+  const requestsPrompt = `Reformat these requests into a paragraph: ${JSON.stringify(req.body.promptFields)}. ` +
+  `Also, incorporate info from these answers into the paragraph: ${JSON.stringify(filteredQuestions)}. ` + 
+  `Aim for concision without leaving out any details, and refer to the user as "I".`
+
+  const requestsCompletion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+        { role: "system", content: "You are translating json into paragraph form." },
+        {
+            role: "user",
+            content: requestsPrompt,
+        }
+    ],
+    n: 1,
+    response_format: {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "response_schema",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+            },
+          },
+          "additionalProperties": false,
+        }
+      }
     }
-  }
+  });
 
-  const outlinePrompt = "Generate an outline " + basicPrompt + "Ensure that topics and subtopics would have " +
-  "substantial enough information.";
+  const requestsResponse = JSON.parse(requestsCompletion.choices[0].message.content);
 
+  console.log(requestsResponse.prompt);
+
+  var basicPrompt = requestsResponse.prompt + 
+  " Do not add audio or visual content. Do not add peer or interactive activities. "
+
+  const outlinePrompt = "Generate an outline for a course on " + req.body.courseName + " while considering this user info: " + basicPrompt + "The outline consists of topics and subtopics. " +
+  "For each subtopic, list out things to include. If the user wants a basic course, stick to a few " + 
+  "points per subtopic. For more in-depth courses, include more points. Minimize redundancy in discussion " + 
+  "points across course subtopics.";
+  
   console.log(outlinePrompt);
 
   var completion = await openai.chat.completions.create({
@@ -251,14 +286,24 @@ router.post('/create_course', async function(req, res, next) {
                           "topic": { "type": "string" },
                           "subtopics": {
                               "type": "array",
-                              "items": { "type": "string" }
+                              "items": { 
+                                "type": "object",
+                                "properties": {
+                                  "subtopic": { "type": "string" },
+                                  "discussion_points": { 
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                  },
+                                },
+                                "required": ["subtopic", "discussion_points"]
+                              }
                           }
                       },
-                      "required": ["description", "topic", "subtopics"]
+                      "required": ["topic", "subtopics"]
                   }
               }
             },
-            required: ["outline"],
+            required: ["course_description", "outline"],
           "additionalProperties": false,
         }
       }
@@ -274,8 +319,9 @@ router.post('/create_course', async function(req, res, next) {
     const topic = unit.topic;
     const subtopics = unit.subtopics;
 
-    const topicPrompt = `Generate content for the topic ${topic} and each of the subtopics ${subtopics}.` + 
-    `This is ${basicPrompt}. Also keep in mind the content already generated and avoid redundancy: ${content}`;
+    const topicPrompt = `Generate content for the topic ${topic} and each of the subtopics ${JSON.stringify(subtopics)}. ` + 
+    "For each subtopic, hit all the corresponding discussion points. " + 
+    `For level of detail, writing style, and other considerations, use the user info: ${basicPrompt}`;
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",

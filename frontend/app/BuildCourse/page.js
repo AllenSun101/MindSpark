@@ -9,7 +9,7 @@ export default function BuildCourse(){
     const [file, setFile] = useState();
     const [status, setStatus] = useState("Initial");
     const [followUpQs, setFollowUpQs] = useState([]);
-    const [prompt, setPrompt] = useState("");
+    const [prompt, setPrompt] = useState({});
     const [generateStatus, setGenerateStatus] = useState("");
     const { data: session } = useSession();
     const [isChecked, setIsChecked] = useState(false);
@@ -264,7 +264,7 @@ export default function BuildCourse(){
           }, {});
 
         axios.post("http://localhost:3001/create_course", {
-            previousPrompt: prompt,
+            promptFields: prompt,
             questions: questionAnswerMap,
             courseName: formState.courseName,
             email: session.user.email,
