@@ -210,7 +210,6 @@ router.post('/create_course', async function(req, res, next) {
     Object.entries(req.body.questions).filter(([key, value]) => value !== "" && value !== undefined)
   );
 
-  // Depth vs breadth in discussion points vs topics.
   var requestsPrompt = "";
   var requestsResponsePrompt = "";
   if(Object.keys(req.body.promptFields || {}).length > 0 && Object.keys(filteredQuestions || {}).length > 0){
@@ -265,9 +264,10 @@ router.post('/create_course', async function(req, res, next) {
   var basicPrompt = requestsResponsePrompt + 
   " Do not add audio or visual content. Do not add peer or interactive activities. "
 
-  const outlinePrompt = "Generate an outline for a course on " + req.body.courseName + " while considering this user info: " + basicPrompt + "The outline consists of topics and subtopics. " +
-  "For each subtopic, list out things to include. If the user wants a basic course, stick to a few " + 
-  "points per subtopic. For more in-depth courses, include more points. Minimize redundancy in discussion " + 
+  const outlinePrompt = "Generate an outline for a course on " + req.body.courseName + " while considering this user info: " + basicPrompt + " The outline consists of topics and subtopics. " +
+  "There should be 2-7 subtopics per topic. For each subtopic, list out things to include. If the user wants a " + 
+  "basic course, stick to fewer broader topics and/or fewer discussion points per subtopic. For more in-depth courses, " + 
+  "include a larger amount of more specific topics and/or more discussion points per subtopic. Minimize redundancy in discussion " + 
   "points across course subtopics.";
   
   console.log(outlinePrompt);
