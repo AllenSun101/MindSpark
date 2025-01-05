@@ -210,44 +210,59 @@ router.post('/create_course', async function(req, res, next) {
     Object.entries(req.body.questions).filter(([key, value]) => value !== "" && value !== undefined)
   );
 
-  // handle empty either, or both. Depth vs breadth in discussion points vs topics.
+  // Depth vs breadth in discussion points vs topics.
+  var requestsPrompt = "";
+  var requestsResponsePrompt = "";
+  if(Object.keys(req.body.promptFields || {}).length > 0 && Object.keys(filteredQuestions || {}).length > 0){
+    requestsPrompt = `Reformat these requests into a paragraph: ${JSON.stringify(req.body.promptFields)}. ` +
+    `Also, incorporate info from these answers into the paragraph: ${JSON.stringify(filteredQuestions)}. ` + 
+    `Aim for concision without leaving out any details, and refer to the user as "I".`
+  }
+  else if(Object.keys(req.body.promptFields || {}).length > 0){
+    requestsPrompt = `Reformat these requests into a paragraph: ${JSON.stringify(req.body.promptFields)}. ` +
+    `Aim for concision without leaving out any details, and refer to the user as "I".`
+  }
+  else if(Object.keys(filteredQuestions || {}).length > 0){
+    requestsPrompt = `Incorporate info from these answers into a paragraph: ${JSON.stringify(filteredQuestions)}. ` +
+    `Aim for concision without leaving out any details, and refer to the user as "I".`
+  }
 
-  const requestsPrompt = `Reformat these requests into a paragraph: ${JSON.stringify(req.body.promptFields)}. ` +
-  `Also, incorporate info from these answers into the paragraph: ${JSON.stringify(filteredQuestions)}. ` + 
-  `Aim for concision without leaving out any details, and refer to the user as "I".`
+  console.log(requestsPrompt);
 
-  const requestsCompletion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-        { role: "system", content: "You are translating json into paragraph form." },
-        {
-            role: "user",
-            content: requestsPrompt,
-        }
-    ],
-    n: 1,
-    response_format: {
-      "type": "json_schema",
-      "json_schema": {
-        "name": "response_schema",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "prompt": {
-              "type": "string",
+  if(requestsPrompt != ""){
+    const requestsCompletion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+          { role: "system", content: "You are translating json into paragraph form." },
+          {
+              role: "user",
+              content: requestsPrompt,
+          }
+      ],
+      n: 1,
+      response_format: {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "response_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "prompt": {
+                "type": "string",
+              },
             },
-          },
-          "additionalProperties": false,
+            "additionalProperties": false,
+          }
         }
       }
-    }
-  });
+    });
+    
+    requestsResponsePrompt = JSON.parse(requestsCompletion.choices[0].message.content).prompt;
+    
+    console.log(requestsResponsePrompt);
+  }
 
-  const requestsResponse = JSON.parse(requestsCompletion.choices[0].message.content);
-
-  console.log(requestsResponse.prompt);
-
-  var basicPrompt = requestsResponse.prompt + 
+  var basicPrompt = requestsResponsePrompt + 
   " Do not add audio or visual content. Do not add peer or interactive activities. "
 
   const outlinePrompt = "Generate an outline for a course on " + req.body.courseName + " while considering this user info: " + basicPrompt + "The outline consists of topics and subtopics. " +
@@ -319,8 +334,8 @@ router.post('/create_course', async function(req, res, next) {
     const topic = unit.topic;
     const subtopics = unit.subtopics;
 
-    const topicPrompt = `Generate content for the topic ${topic} and each of the subtopics ${JSON.stringify(subtopics)}. ` + 
-    "For each subtopic, hit all the corresponding discussion points. " + 
+    const topicPrompt = `Generate content for the topic ${topic} and all of the subtopics ${JSON.stringify(subtopics)}. ` + 
+    "Use the exact subtopic names provided. For each subtopic, hit all the corresponding discussion points. " + 
     `For level of detail, writing style, and other considerations, use the user info: ${basicPrompt}`;
     
     const completion = await openai.chat.completions.create({
