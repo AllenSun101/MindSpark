@@ -169,8 +169,8 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
     }
   }
     
-  prompt += `These request fields are empty: ${emptyFields} What follow-up questions would you ask to generate a robust personalized course? ` +
-    `Only generate questions that will actually help, but generate as many as you need to.` +
+  prompt += `These request fields are empty: ${emptyFields} What follow-up questions would you ask to generate a personalized course? ` +
+    `Only generate insightful questions, and try to generate as few as possible. ` +
     `Do not ask about deadlines or future content releases. At the moment, you don't have audio or visual content support. ` + 
     `You also cannot do peer or interactive activities.`;
 
@@ -208,6 +208,15 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
   const response = JSON.parse(completion.choices[0].message.content);
   res.json( {prompt: promptFields, response: response["questions"]} );
 });
+
+async function BasicOutline(){
+
+}
+
+async function DetailedOutline(){
+  // use second layer as topics and flatten
+
+}
 
 /* POST create course and topics list. */
 router.post('/create_course', async function(req, res, next) {
@@ -276,12 +285,10 @@ router.post('/create_course', async function(req, res, next) {
   var basicPrompt = requestsResponsePrompt + 
   " Do not add audio or visual content. Do not add peer or interactive activities. "
 
-  // instead of doing this, take away the first structure and flatten next layer as topics
+  // determine whether outline should be basic or in-depth
 
   const outlinePrompt = "Generate an outline for a course on " + req.body.courseName + " while considering this user info: " + basicPrompt + " The outline consists of topics and subtopics. " +
-  "For each subtopic, list out things to include. If the user wants a " + 
-  "basic course, stick to fewer broader topics, fewer subtopics, and fewer discussion points per subtopic. For more in-depth courses, " + 
-  "include more specific topics, more specific subtopics, and more discussion points per subtopic. Minimize redundancy in discussion " + 
+  "For each subtopic, list out things to include. Minimize redundancy in discussion " + 
   "points across course subtopics.";
   
   console.log(outlinePrompt);
