@@ -80,7 +80,7 @@ export default function BuildCourse(){
         formData.append("courseLogistics", formState.courseLogistics);
         formData.append("otherRequests", formState.otherRequests);
 
-        axios.post("http://localhost:3001/follow_ups", formData, {
+        axios.post("http://localhost:3001/buildCourse/follow_ups", formData, {
             headers: {
                 "Content-Type": "multipart/form-data", 
             },
@@ -263,7 +263,7 @@ export default function BuildCourse(){
             return acc;
           }, {});
 
-        axios.post("http://localhost:3001/create_course", {
+        axios.post("http://localhost:3001/buildCourse/create_course", {
             promptFields: prompt,
             questions: questionAnswerMap,
             courseName: formState.courseName,
