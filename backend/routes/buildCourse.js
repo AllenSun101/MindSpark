@@ -209,87 +209,10 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
   res.json( {prompt: promptFields, response: response["questions"]} );
 });
 
-async function BasicOutline(){
-
-}
-
-async function DetailedOutline(){
-  // use second layer as topics and flatten
-
-}
-
-/* POST create course and topics list. */
-router.post('/create_course', async function(req, res, next) {
-  console.log(req.body);
-
-  const email = req.body.email;
-  const name = req.body.name;
-  const courseName = req.body.courseName;
-
-  // filter out questions with response
-  const filteredQuestions = Object.fromEntries(
-    Object.entries(req.body.questions).filter(([key, value]) => value !== "" && value !== undefined)
-  );
-
-  var requestsPrompt = "";
-  var requestsResponsePrompt = "";
-  if(Object.keys(req.body.promptFields || {}).length > 0 && Object.keys(filteredQuestions || {}).length > 0){
-    requestsPrompt = `Reformat these requests into a paragraph: ${JSON.stringify(req.body.promptFields)}. ` +
-    `Also, incorporate info from these answers into the paragraph: ${JSON.stringify(filteredQuestions)}. ` + 
-    `Aim for concision without leaving out any details, and refer to the user as "I".`
-  }
-  else if(Object.keys(req.body.promptFields || {}).length > 0){
-    requestsPrompt = `Reformat these requests into a paragraph: ${JSON.stringify(req.body.promptFields)}. ` +
-    `Aim for concision without leaving out any details, and refer to the user as "I".`
-  }
-  else if(Object.keys(filteredQuestions || {}).length > 0){
-    requestsPrompt = `Incorporate info from these answers into a paragraph: ${JSON.stringify(filteredQuestions)}. ` +
-    `Aim for concision without leaving out any details, and refer to the user as "I".`
-  }
-
-  console.log(requestsPrompt);
-
-  if(requestsPrompt != ""){
-    const requestsCompletion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-          { role: "system", content: "You are translating json into paragraph form." },
-          {
-              role: "user",
-              content: requestsPrompt,
-          }
-      ],
-      n: 1,
-      response_format: {
-        "type": "json_schema",
-        "json_schema": {
-          "name": "response_schema",
-          "schema": {
-            "type": "object",
-            "properties": {
-              "prompt": {
-                "type": "string",
-              },
-            },
-            "additionalProperties": false,
-          }
-        }
-      }
-    });
-    
-    requestsResponsePrompt = JSON.parse(requestsCompletion.choices[0].message.content).prompt;
-    
-    console.log(requestsResponsePrompt);
-  }
-
-  var basicPrompt = requestsResponsePrompt + 
-  " Do not add audio or visual content. Do not add peer or interactive activities. "
-
-  // determine whether outline should be basic or in-depth
-
-  const outlinePrompt = "Generate an outline for a course on " + req.body.courseName + " while considering this user info: " + basicPrompt + " The outline consists of topics and subtopics. " +
-  "For each subtopic, list out things to include. Minimize redundancy in discussion " + 
-  "points across course subtopics.";
+async function BasicOutline(basicPrompt, courseName){
+  const outlinePrompt = `Generate an outline for a course on ${courseName} while considering this user info: ` + 
+  `${basicPrompt} The outline consists of topics and subtopics. For each subtopic, list out things to include. ` +  
+  `Minimize redundancy in discussion points across course subtopics.`;
   
   console.log(outlinePrompt);
 
@@ -348,6 +271,193 @@ router.post('/create_course', async function(req, res, next) {
 
   var outline = JSON.parse(completion.choices[0].message.content);
   console.log(outline);
+
+  return outline;
+}
+
+async function DetailedOutline(basicPrompt, courseName){
+  const outlinePrompt = `Generate an outline for a course on ${courseName} while considering this user info: ` + 
+  `${basicPrompt} The outline consists of topics and subtopics. For each subtopic, list out things to include. ` +  
+  `Minimize redundancy in discussion points across course subtopics. It is recommended to include at least 10 ` + 
+  `topics, at least 3-4 subtopics per topic, and at least 3-4 discussion points per subtopic.`;
+  
+  console.log(outlinePrompt);
+
+  var completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+        { role: "system", content: "You are creating intuitive and engaging course content." },
+        {
+            role: "user",
+            content: outlinePrompt,
+        }
+    ],
+    n: 1,
+    response_format: {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "response_schema",
+        "schema": {
+          "type": "object",
+            "properties": {
+              "course_description": {
+                "type": "string",
+                "description": "one sentence description of the course",
+              },
+              "outline": {
+                  "type": "array",
+                  "items": {
+                      "type": "object",
+                      "properties": {
+                          "topic": { "type": "string" },
+                          "subtopics": {
+                              "type": "array",
+                              "items": { 
+                                "type": "object",
+                                "properties": {
+                                  "subtopic": { "type": "string" },
+                                  "discussion_points": { 
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                  },
+                                },
+                                "required": ["subtopic", "discussion_points"]
+                              }
+                          }
+                      },
+                      "required": ["topic", "subtopics"]
+                  }
+              }
+            },
+            required: ["course_description", "outline"],
+          "additionalProperties": false,
+        }
+      }
+    }
+  });
+
+  var outline = JSON.parse(completion.choices[0].message.content);
+  console.log(outline);
+
+  return outline;
+}
+
+/* POST create course and topics list. */
+router.post('/create_course', async function(req, res, next) {
+  console.log(req.body);
+
+  const email = req.body.email;
+  const name = req.body.name;
+  const courseName = req.body.courseName;
+
+  // filter out questions with response
+  const filteredQuestions = Object.fromEntries(
+    Object.entries(req.body.questions).filter(([key, value]) => value !== "" && value !== undefined)
+  );
+
+  var requestsPrompt = "";
+  var requestsResponsePrompt = "";
+  if(Object.keys(req.body.promptFields || {}).length > 0 && Object.keys(filteredQuestions || {}).length > 0){
+    requestsPrompt = `Reformat these requests into a paragraph: ${JSON.stringify(req.body.promptFields)}. ` +
+    `Also, incorporate info from these answers into the paragraph: ${JSON.stringify(filteredQuestions)}. ` + 
+    `Aim for concision without leaving out any details, and refer to the user as "I".`;
+  }
+  else if(Object.keys(req.body.promptFields || {}).length > 0){
+    requestsPrompt = `Reformat these requests into a paragraph: ${JSON.stringify(req.body.promptFields)}. ` +
+    `Aim for concision without leaving out any details, and refer to the user as "I".`;
+  }
+  else if(Object.keys(filteredQuestions || {}).length > 0){
+    requestsPrompt = `Incorporate info from these answers into a paragraph: ${JSON.stringify(filteredQuestions)}. ` +
+    `Aim for concision without leaving out any details, and refer to the user as "I".`;
+  }
+
+  console.log(requestsPrompt);
+
+  if(requestsPrompt != ""){
+    const requestsCompletion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+          { role: "system", content: "You are translating json into paragraph form." },
+          {
+              role: "user",
+              content: requestsPrompt,
+          }
+      ],
+      n: 1,
+      response_format: {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "response_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "prompt": {
+                "type": "string",
+              },
+            },
+            "additionalProperties": false,
+          }
+        }
+      }
+    });
+    
+    requestsResponsePrompt = JSON.parse(requestsCompletion.choices[0].message.content).prompt;
+    
+    console.log(requestsResponsePrompt);
+  }
+
+  var basicPrompt = requestsResponsePrompt + 
+  " Do not add audio or visual content. Do not add peer or interactive activities."
+
+  var outline = {}
+  // if no info provided, assume basic outline 
+  if(requestsResponsePrompt == ""){
+    outline = await BasicOutline(basicPrompt, req.body.courseName);
+  }
+  else{
+    // determine whether outline should be basic or in-depth
+    var depthPrompt = "Using this information, determine whether the user wants a basic or in-depth course. " + 
+    `For basic, look for words such as "short", "brief", "simple". For in-depth, look for words like "long", ` +
+    `"detailed", "complex". If there are no signal words, use your best judgement from the content. ` + 
+    `The content: ${requestsResponsePrompt}`;
+
+    const depthCompletion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+          { role: "system", content: "You are determining user intentions from text." },
+          {
+              role: "user",
+              content: depthPrompt,
+          }
+      ],
+      n: 1,
+      response_format: {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "response_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "depth": {
+                "type": "string",
+                "enum": ["basic", "in-depth"],
+              },
+            },
+            "additionalProperties": false,
+          }
+        }
+      }
+    });
+  
+    const depth = JSON.parse(depthCompletion.choices[0].message.content).depth;
+  
+    if(depth == "in-depth"){
+      outline = await DetailedOutline(basicPrompt, req.body.courseName);
+    }
+    else{
+      outline = await BasicOutline(basicPrompt, req.body.courseName);
+    }
+  }
 
   var content = [];
 
