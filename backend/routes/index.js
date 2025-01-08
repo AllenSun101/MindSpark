@@ -110,43 +110,6 @@ router.get('/get_courses', async function(req, res, next) {
 
 });
 
-
-/* GET user profile, create user document if none. */
-router.get('/get_profile', async function(req, res, next) {
-  // fetch user courses, and create user document if it does not exist
-  const dbName = "MindSpark";
-  const collectionName = "Users";
-  var status = "Success";
-
-  const email = req.query.email;
-  const name = req.query.name;
-
-  try {
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
-
-    var record = await collection.findOne({ email: email });
-
-    var status = "Success";
-
-    if (!record) {
-      status = await CreateUserDocument(email, name);
-      record = {};
-    }
-  } 
-  catch(error){
-    console.error('Error fetching profile:', error);
-    status = "Fail"
-  }
-  finally {
-    await client.close();
-  }
-
-  res.json( {profile: record, status: status} );
-
-});
-
 router.get('/get_outline', async function(req, res, next) {
   // fetch outline given course id
   const dbName = "MindSpark";
