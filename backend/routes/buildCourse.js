@@ -591,14 +591,89 @@ router.post('/create_course', async function(req, res, next) {
 
 router.post('/regenerate_page', async function(req, res, next) {
     const newRequest = req.body.newRequest;
-    var prompt = `Modify the page while taking this into account: ${newRequest}.`;
+    const currentPage = req.body.page;
+    const email = req.body.email;
+    const courseId = req.body.courseId;
+    const topic = req.body.topic;
+    const subtopic = req.body.subtopic;
+
+    var prompt = `Modify the page while taking this into account: ${newRequest}. The current page: ${currentPage}`;
+    
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+          { role: "system", content: "You are creating intuitive and engaging course content." },
+          {
+              role: "user",
+              content: prompt,
+          }
+      ],
+      n: 1,
+      response_format: {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "response_schema",
+          "schema": {
+            "type": "object",
+              "properties": {
+                "page": {"type": "string"},
+              },
+              required: ["page"],
+            "additionalProperties": false,
+          }
+        }
+      }
+    });
+
+    const newPage = JSON.parse(completion.choices[0].message.page);
 
     // modify the mongo db page
+    // topic if subtopic is -1
+
+    res.json( {"status": "Success"} );
 })
 
 router.post('/regenerate_course', async function(req, res, next) {
+    console.log(req.body);
     const newRequest = req.body.newRequest;
+    const currentPage = req.body.page;
+    const email = req.body.email;
+    const courseId = req.body.courseId;
+
+    console.log(courseId);
+
     var prompt = `Modify the pages while taking this into account: ${newRequest}.`;
+
+    const dbName = "MindSpark";
+    const collectionName = "Courses";
+
+    var status = "Success";
+    try{
+      await client.connect();
+      const database = client.db(dbName);
+      const collection = database.collection(collectionName);
+      
+      const filter = { _id: ObjectId.createFromHexString(courseId)};
+      const update = { $set: { "course_outline.course_description": "Be beep boop!"} };
+      
+      const updateResult = await collection.updateOne(
+        filter,
+        update      
+      );
+      
+      console.log('Document updated');
+    }
+    catch(error){
+      console.error('Error inserting document:', error);
+      status = "Fail";
+    }
+    finally {
+      // Close the connection
+      await client.close();
+    }
+
+    // rewrite outline, rewrite course
+    res.json( {"status": status} );
 })
 
 module.exports = router;

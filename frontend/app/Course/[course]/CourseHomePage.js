@@ -14,11 +14,12 @@ export default function CourseHomePage({data, courseId, session}){
     const [deleteResult, setDeleteResult] = useState();
 
     const [showRegenerateCourse, setShowRegenerateCourse] = useState(false);
+    const [regenerateResult, setRegenerateResult] = useState();
 
     const courseName = data.course_name
-    const courseDescription = data.course_description;
+    const [courseDescription, setCourseDescription] = useState(data.course_description);
 
-    const topics = data.course_outline;
+    const [topics, setTopics] = useState(data.course_outline);
 
     const handleDeleteCourse = async () => {
         const { data } = await axios.delete("http://localhost:3001/delete_course", {
@@ -33,16 +34,22 @@ export default function CourseHomePage({data, courseId, session}){
     };
 
     const handleRegenerateCourse = async (event) => {
-        const { data } = await axios.post("http://localhost:3001/regenerate_course", {
+        var { data } = await axios.post("http://localhost:3001/buildCourse/regenerate_course", {
+            email: session.user.email,
+            courseId: courseId,
+            newRequest: event.target.regenerateRequests,
+        })
+        setShowRegenerateCourse(false);
+        setRegenerateResult(data.status);
+        
+        // refetch data, change desc and topics to state
+        var { data } = await axios.get("http://localhost:3001/get_outline", {
             params: {
-                email: session.user.email,
-                courseId: courseId,
-                newRequest: event.target.regenerateRequests.value,
+                courseId: courseId
             }
         })
-        console.log(data)
-        setShowDeleteConfirmation(false);
-        setDeleteResult(data.status);
+        setTopics(data.course_outline);
+        setCourseDescription(data.course_description);
     };
 
     const grades = {
@@ -273,6 +280,19 @@ export default function CourseHomePage({data, courseId, session}){
                             Close
                         </button>
                     )}
+                </div>
+                </div>
+            )}
+
+            {regenerateResult && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-80 items-center flex flex-col">
+                    <p className="text-lg mb-4 text-center">{regenerateResult == "Success" ? "Successfully regenerated course" : "Error rewriting course"}</p>
+                    <button className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition"
+                    onClick={() => {setRegenerateResult()}}
+                    >
+                        Close
+                    </button>
                 </div>
                 </div>
             )}
