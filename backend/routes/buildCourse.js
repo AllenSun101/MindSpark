@@ -468,7 +468,7 @@ router.post('/create_course', async function(req, res, next) {
     const topicPrompt = `Generate content for the topic ${topic} and all of the subtopics ${JSON.stringify(subtopics)}. ` + 
     "Use the exact subtopic names provided. For each subtopic, hit all the corresponding discussion points. " + 
     `For level of detail, writing style, and other considerations, use the user info: ${basicPrompt}. ` +
-    "Wrap all code blocks in <pre> and <code> tags for proper rendering in HTML. For equations, use Latex " + 
+    "For equations, use Latex " + 
     "and wrap inline formulas with $ and block formulas with $$.";
     
     const completion = await openai.chat.completions.create({

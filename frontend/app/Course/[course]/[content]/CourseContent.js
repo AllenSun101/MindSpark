@@ -6,6 +6,13 @@ import axios from "axios";
 import Markdown from "react-markdown";
 import React from "react";
 
+import "katex/dist/katex.min.css";
+import rehypeKatex from "rehype-katex";
+import remarkMath from "remark-math";
+
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github.css';
+
 export default function CourseContent({data, courseId, topicIndex, subtopicIndex}){
 
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -171,7 +178,8 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                     </button>
                 </div>
                 <div className="min-h-[20vh] mx-8">
-                    <Markdown className="space-y-4" components={{
+                    <Markdown className="space-y-4" remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={{
+                        h3: ({ children }) => <h3 className="font-semibold">{children}</h3>,
                         ul: ({ children }) => <ul className="list-disc pl-6 space-y-4">{children}</ul>,
                         ol: ({ children }) => <ol className="list-decimal pl-6 space-y-4">{children}</ol>,
                         li: ({ children }) => <li className="space-y-4">{children}</li>,
