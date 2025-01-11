@@ -13,10 +13,11 @@ export default function CourseHomePage({data, courseId, session}){
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [deleteResult, setDeleteResult] = useState();
 
+    const [regenerateRequests, setRegenerateRequests] = useState('');
     const [showRegenerateCourse, setShowRegenerateCourse] = useState(false);
     const [regenerateResult, setRegenerateResult] = useState();
 
-    const courseName = data.course_name
+    const courseName = data.course_name;
     const [courseDescription, setCourseDescription] = useState(data.course_description);
 
     const [topics, setTopics] = useState(data.course_outline);
@@ -33,11 +34,16 @@ export default function CourseHomePage({data, courseId, session}){
         setDeleteResult(data.status);
     };
 
+    const handleRegenerateRequestsChange = (event) => {
+        setRegenerateRequests(event.target.value);
+    };
+
     const handleRegenerateCourse = async (event) => {
         var { data } = await axios.post("http://localhost:3001/buildCourse/regenerate_course", {
             email: session.user.email,
             courseId: courseId,
-            newRequest: event.target.regenerateRequests,
+            courseName: courseName,
+            newRequest: regenerateRequests,
         })
         setShowRegenerateCourse(false);
         setRegenerateResult(data.status);
@@ -244,6 +250,8 @@ export default function CourseHomePage({data, courseId, session}){
                     <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2 mb-2" 
                         name="regenerateRequests" 
                         rows="5"
+                        value={regenerateRequests}
+                        onChange={handleRegenerateRequestsChange}
                     >
                     </textarea>
                     <div className="flex justify-between">

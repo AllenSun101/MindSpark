@@ -467,7 +467,9 @@ router.post('/create_course', async function(req, res, next) {
 
     const topicPrompt = `Generate content for the topic ${topic} and all of the subtopics ${JSON.stringify(subtopics)}. ` + 
     "Use the exact subtopic names provided. For each subtopic, hit all the corresponding discussion points. " + 
-    `For level of detail, writing style, and other considerations, use the user info: ${basicPrompt}`;
+    `For level of detail, writing style, and other considerations, use the user info: ${basicPrompt}. ` +
+    "Wrap all code blocks in <pre> and <code> tags for proper rendering in HTML. For equations, use Latex " + 
+    "and wrap inline formulas with $ and block formulas with $$.";
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -639,13 +641,16 @@ router.post('/regenerate_course', async function(req, res, next) {
     const currentPage = req.body.page;
     const email = req.body.email;
     const courseId = req.body.courseId;
+    const courseName = req.body.courseName;
 
-    console.log(courseId);
-
-    var prompt = `Modify the pages while taking this into account: ${newRequest}.`;
+    console.log(newRequest);
 
     const dbName = "MindSpark";
     const collectionName = "Courses";
+
+    // fetch current prompt and outline
+    var prompt = "";
+    var outline = "";
 
     var status = "Success";
     try{
@@ -654,7 +659,188 @@ router.post('/regenerate_course', async function(req, res, next) {
       const collection = database.collection(collectionName);
       
       const filter = { _id: ObjectId.createFromHexString(courseId)};
-      const update = { $set: { "course_outline.course_description": "Be beep boop!"} };
+      
+      // get prompt and outline
+      const documentInfo = await collection.findOne(
+        filter, // Query filter
+        { projection: { generating_prompt: 1, course_outline: 1, _id: 0 } } // Projection
+      );
+
+      console.log(documentInfo);
+
+      prompt = documentInfo.generating_prompt;
+      outline = documentInfo.course_outline;
+      
+      console.log('Document found');
+    }
+    catch(error){
+      console.error('Error finding document:', error);
+      status = "Fail";
+    }
+    finally {
+      // Close the connection
+      await client.close();
+    }
+
+    // generate new outline with old outline, current prompt, and new request 
+    var outlinePrompt = `This outline: ${JSON.stringify(outline)}
+    for course ${courseName} was generated using prompt ${prompt}. 
+    The user wants these changes: ${newRequest}.
+    Generate a new outline that considers these changes.`;
+
+    console.log(outlinePrompt);
+
+    const outlineCompletion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+          { role: "system", content: "You are creating intuitive and engaging course content." },
+          {
+              role: "user",
+              content: outlinePrompt,
+          }
+      ],
+      n: 1,
+      response_format: {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "response_schema",
+          "schema": {
+            "type": "object",
+              "properties": {
+                "course_description": {
+                  "type": "string",
+                  "description": "one sentence description of the course",
+                },
+                "outline": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "topic": { "type": "string" },
+                            "subtopics": {
+                                "type": "array",
+                                "items": { 
+                                  "type": "object",
+                                  "properties": {
+                                    "subtopic": { "type": "string" },
+                                    "discussion_points": { 
+                                      "type": "array",
+                                      "items": {"type": "string"},
+                                    },
+                                  },
+                                  "required": ["subtopic", "discussion_points"]
+                                }
+                            }
+                        },
+                        "required": ["topic", "subtopics"]
+                    }
+                }
+              },
+              required: ["course_description", "outline"],
+            "additionalProperties": false,
+          }
+        }
+      }
+    });
+
+    var newOutline;
+    try {
+      if (typeof outlineCompletion.choices[0].message.content === "string") {
+        newOutline = JSON.parse(outlineCompletion.choices[0].message.content);
+      } else {
+        newOutline = outlineCompletion.choices[0].message; // If it's already an object
+      }
+      console.log(newOutline);
+    } catch (error) {
+      console.error("Error parsing response:", error);
+    }
+
+    // generate content for the new outline, emphasizing requested changes
+    var content = [];
+
+    for(const unit of newOutline.outline){
+      const topic = unit.topic;
+      const subtopics = unit.subtopics;
+
+      const topicPrompt = `Generate content for the topic ${topic} and all of the subtopics ${JSON.stringify(subtopics)}. ` + 
+      "Use the exact subtopic names provided. For each subtopic, hit all the corresponding discussion points. " + 
+      `For level of detail, writing style, and other considerations, use the user info: ${prompt} ` + 
+      `and ${newRequest}.`;
+
+      console.log(topicPrompt);
+      
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+            { role: "system", content: "You are creating intuitive and engaging course content." },
+            {
+                role: "user",
+                content: topicPrompt,
+            }
+        ],
+        n: 1,
+        response_format: {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "response_schema",
+            "schema": {
+              "type": "object",
+                "properties": {
+                  "topic": {
+                    "type": "object",
+                      "properties": {
+                        "topic_name": { "type": "string" },
+                        "topic_content": { "type": "string" },
+                        },
+                        "required": ["topic_name", "topic_content"]
+                  },
+                  "subtopics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "subtopic_name": { "type": "string" },
+                          "subtopic_content": { "type": "string" },
+                        },
+                        "required": ["subtopic_name", "subtopic_content"]
+                      }
+                  }
+                },
+                required: ["topic", "subtopics"],
+              "additionalProperties": false,
+            }
+          }
+        }
+      });
+
+      const topicContent = JSON.parse(completion.choices[0].message.content);
+      content.push(topicContent);
+      console.log("YEET");
+    }
+
+    // Add completion status
+    for(let i = 0; i < newOutline.outline.length; i++){
+      const tempTopic = newOutline.outline[i].topic;
+      newOutline.outline[i].topic = {
+        "topic": tempTopic,
+        "status": "incomplete"
+      };
+      for(let j = 0; j < newOutline.outline[i].subtopics.length; j++){
+        const tempSubtopic = newOutline.outline[i].subtopics[j];
+        newOutline.outline[i].subtopics[j] = {
+          "subtopic": tempSubtopic,
+          "status": "incomplete"
+        };
+      }
+    }
+
+    try{
+      await client.connect();
+      const database = client.db(dbName);
+      const collection = database.collection(collectionName);
+      
+      const filter = { _id: ObjectId.createFromHexString(courseId)};
+      const update = { $set: { "course_outline": newOutline, "course_content": content} };
       
       const updateResult = await collection.updateOne(
         filter,
