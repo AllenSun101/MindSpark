@@ -16,6 +16,7 @@ export default function BuildCourse(){
     const [courseId, setCourseId] = useState();
     const [formState, setFormState] = useState({
         courseName: "",
+        audience: "",
         learningStyle: "",
         contentFormat: "",
         includedTopics: "",
@@ -72,6 +73,7 @@ export default function BuildCourse(){
         const formData = new FormData();
 
         formData.append("courseName", formState.courseName);
+        formData.append("audience", formState.audience);
         formData.append("learningStyle", formState.learningStyle);
         formData.append("contentFormat", formState.contentFormat);
         formData.append("file", file);
@@ -121,7 +123,19 @@ export default function BuildCourse(){
                             <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Course Style</span>
                         </div>
                         <div className="flex mb-2">
-                            <label>What strategies can be used to help you effectively learn?</label>
+                            <label>Who is this course for, and what is the audience background?</label>
+                        </div>
+                        <div className="flex mb-6">
+                            <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
+                                name="audience" 
+                                rows="3"
+                                value={formState.audience}
+                                onChange={handleInputChange}>
+                            </textarea>
+                        </div>
+
+                        <div className="flex mb-2">
+                            <label>What strategies can be used to help the audience effectively learn?</label>
                         </div>
                         <div className="flex mb-6">
                             <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 

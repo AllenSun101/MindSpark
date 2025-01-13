@@ -125,6 +125,7 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
 
   var emptyFields = [];
   var fields = {
+    "Audience": req.body.audience,
     "Learning Style": req.body.learningStyle,
     "Content Format": req.body.contentFormat,
     "Document Information": documentInformation,
