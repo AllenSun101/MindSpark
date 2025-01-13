@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from "react";
+import { ArrowPathIcon } from '@heroicons/react/24/outline'
 import Link from "next/link";
 import axios from "axios";
 import Markdown from "react-markdown";
@@ -13,13 +14,17 @@ import remarkMath from "remark-math";
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css';
 
-export default function CourseContent({data, courseId, topicIndex, subtopicIndex}){
+export default function CourseContent({data, courseId, topicIndex, subtopicIndex, session}){
 
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [selectedSubtopic, setSelectedSubtopic] = useState(Number(subtopicIndex));
     // const [topicStatus, setTopicStatus] = useState(data.topic_status.status);
     const [subtopicStatus, setSubtopicStatus] = useState(data.subtopic_status);
     const [editing, setEditing] = useState(false);
+
+    const [regeneratePage, setRegeneratePage] = useState(false);
+    const [regenerateRequests, setRegenerateRequests] = useState('');
+    const [regenerateResult, setRegenerateResult] = useState();
 
     const topic = data.topic_data.topic_name;
 
@@ -41,6 +46,30 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
             console.log(error);
         })
     }
+
+    const handleRegenerateRequestsChange = (event) => {
+        setRegenerateRequests(event.target.value);
+    };
+
+    const handleRegeneratePage = async () => {
+        var currentPage = "";
+        if(selectedSubtopic == -1){
+            currentPage = data.topic_data.topic_content;
+        }
+        else{
+            currentPage = subtopics[selectedSubtopic].subtopic_content;
+        }
+        var { data } = await axios.post("http://localhost:3001/buildCourse/regenerate_page", {
+            email: session.user.email,
+            courseId: courseId,
+            newRequest: regenerateRequests,
+            currentPage: currentPage,
+            topic: topicIndex,
+            subtopic: subtopicIndex,
+        })
+        setRegeneratePage(false);
+        setRegenerateResult(data.status);
+    };
 
     function SideBar(){
         return(
@@ -176,6 +205,10 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                         </svg>
                         <span>Edit Content</span>
                     </button>
+                    <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] px-4 py-2 rounded-xl flex items-center space-x-2" onClick={() => {setRegeneratePage(true)}}>
+                        <ArrowPathIcon aria-hidden="true" className="size-6 text-black" />
+                        <span>Regenerate Page</span>
+                    </button>
                 </div>
                 <div className="min-h-[20vh] mx-8">
                     <Markdown className="space-y-4" remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={{
@@ -198,6 +231,46 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
             {sidebarOpen ? <SideBar/> : <CollapsedSideBar/>}
             <div className="w-1 bg-gray-500"/>
             <MainContent/>
+            {regeneratePage && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-100">
+                        <p className="text-lg mb-2 text-center">Enter new requests and any changes that should be made:</p>
+                        <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2 mb-2" 
+                            name="regenerateRequests" 
+                            rows="5"
+                            value={regenerateRequests}
+                            onChange={handleRegenerateRequestsChange}
+                        >
+                        </textarea>
+                        <div className="flex justify-between">
+                        <button
+                            className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg"
+                            onClick={handleRegeneratePage}
+                        >
+                            Regenerate
+                        </button>
+                        <button
+                            className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
+                            onClick={() => {setRegeneratePage(false)}}
+                        >
+                            Cancel
+                        </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {regenerateResult && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-80 items-center flex flex-col">
+                    <p className="text-lg mb-4 text-center">{regenerateResult == "Success" ? "Successfully regenerated page" : "Error rewriting page"}</p>
+                    <button className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition"
+                    onClick={() => {setRegenerateResult()}}
+                    >
+                        Close
+                    </button>
+                </div>
+                </div>
+            )}
         </div>
     );
 }

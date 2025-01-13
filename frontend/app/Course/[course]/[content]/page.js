@@ -56,7 +56,7 @@ export default function Content(){
     return (
         <div>
             <Chatbot data={topicContent} subtopicIndex={subtopicIndex}/>
-            <CourseContent data={topicContent} courseId={courseId} topicIndex={topicIndex} subtopicIndex={subtopicIndex}/> 
+            <CourseContent data={topicContent} courseId={courseId} topicIndex={topicIndex} subtopicIndex={subtopicIndex} session={session}/> 
         </div>
     )
 }

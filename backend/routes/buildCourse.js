@@ -593,13 +593,19 @@ router.post('/create_course', async function(req, res, next) {
 
 router.post('/regenerate_page', async function(req, res, next) {
     const newRequest = req.body.newRequest;
-    const currentPage = req.body.page;
+    const currentPage = req.body.currentPage;
     const email = req.body.email;
     const courseId = req.body.courseId;
     const topic = req.body.topic;
     const subtopic = req.body.subtopic;
 
-    var prompt = `Modify the page while taking this into account: ${newRequest}. The current page: ${currentPage}`;
+    // Adjust discussion points first so that relative scope is maintained and context considered
+
+    console.log(currentPage);
+
+    var prompt = `Modify the page while taking this into account: ${newRequest}. The current page: ${currentPage}` + 
+    "For equations, use Latex " + 
+    "and wrap inline formulas with $ and block formulas with $$.";
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -620,19 +626,52 @@ router.post('/regenerate_page', async function(req, res, next) {
               "properties": {
                 "page": {"type": "string"},
               },
-              required: ["page"],
             "additionalProperties": false,
           }
         }
       }
     });
 
-    const newPage = JSON.parse(completion.choices[0].message.page);
+    const newPage = JSON.parse(completion.choices[0].message.content).page;
 
-    // modify the mongo db page
-    // topic if subtopic is -1
+    console.log(newPage);
 
-    res.json( {"status": "Success"} );
+    var status = "Success";
+    const dbName = "MindSpark";
+    const collectionName = "Courses";
+    
+    try{
+      await client.connect();
+      const database = client.db(dbName);
+      const collection = database.collection(collectionName);
+
+      const filter = { _id: ObjectId.createFromHexString(courseId)};
+
+      var update = {};
+      if(subtopic == -1){
+        var update = { $set: { [`course_content.${topic}.topic.topic_content`]: newPage} };
+      }
+      else{
+        var update = { $set: { [`course_content.${topic}.subtopics.${subtopic}.subtopic_content`]: newPage} };
+      }
+
+      const updateResult = await collection.updateOne(
+        filter,
+        update      
+      );
+      
+      console.log('Document updated');
+    }
+    catch(error){
+      console.error('Error updating document:', error);
+      status = "Fail";
+    }
+    finally {
+      // Close the connection
+      await client.close();
+    }
+
+    res.json( {"status": status} );
 })
 
 router.post('/regenerate_course', async function(req, res, next) {
