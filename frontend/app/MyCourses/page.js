@@ -49,7 +49,7 @@ export default function MyCourses() {
     if (!session?.user) {
         return (
             <div className="container mx-auto px-8 lg:px-16 py-12">
-                <div className="mt-40 mb-40 text-center">
+                <div className="mt-40 mb-64 text-center">
                     <p>Sign in to access this page!</p>
                 </div>
             </div>
@@ -59,7 +59,7 @@ export default function MyCourses() {
     if (loading) {
         return (
             <div className="container mx-auto px-8 lg:px-16 py-12">
-                <div className="mt-40 mb-40 text-center">
+                <div className="mt-40 mb-64 text-center">
                     <p>Loading...</p>
                 </div>
             </div>
@@ -70,7 +70,7 @@ export default function MyCourses() {
         return (
             <div className="container mx-auto px-8 lg:px-16 py-12">
                 <h1 className="text-center font-semibold text-3xl mb-6">{session.user.name}&apos;s Courses</h1>
-                <div className="mt-40 mb-20 text-center">
+                <div className="mt-40 mb-40 text-center">
                     <p className="mb-4">No courses currently. Create one here!</p>
                     <Link href={"/BuildCourse"}>
                         <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] rounded-xl px-4 py-2">

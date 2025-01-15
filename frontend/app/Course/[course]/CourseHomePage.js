@@ -183,7 +183,7 @@ export default function CourseHomePage({data, courseId, session}){
 
     return(
         <div>
-            <div className="flex flex-row space-x-20 px-24 py-16">
+            <div className="flex flex-row space-x-20 px-24 py-16 mb-28">
                 <div style={{ width: "30%" }}>
                     <h1 className="text-2xl font-bold mb-4">{courseName}</h1>
                     <h2>{courseDescription}</h2>
