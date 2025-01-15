@@ -21,7 +21,17 @@ export default function BuildCourse(){
         contentFormat: "",
         includedTopics: "",
         courseLogistics: "",
-        otherRequests: ""
+        otherRequests: "", 
+        features: {
+            "Practice Problems": false,
+            "Flash Cards": false,
+            "Games": false,
+            "Simulations": false,
+            "Videos": false,
+            "External Links": false,
+            "Narrated Slides": false,
+            "Images and Diagrams": false,
+        }
     });
     const [loading, setLoading] = useState(false);
 
@@ -240,6 +250,12 @@ export default function BuildCourse(){
                                 value={formState.courseLogistics}
                                 onChange={handleInputChange}>
                             </textarea>
+                        </div>
+
+                        <div className="flex mb-2">
+                            <label>Include the following?</label>
+                            <p>Loop through possibilities, checkbox</p>
+                            <p>If checked, include more specific fields and extra notes</p>
                         </div>
                         
                         <div className="mb-2">
