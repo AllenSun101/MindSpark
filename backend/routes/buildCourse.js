@@ -9,26 +9,14 @@ const RTFParser = require('rtf-parser');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, 
 });
 
-const uri = process.env.MONGO_DB;
-
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function CreateUserDocument(email, name){
-  const dbName = "MindSpark";
-  const collectionName = "Users";
+async function CreateUserDocument(db, email, name){
   var status = "Success";
 
   try{
@@ -38,22 +26,15 @@ async function CreateUserDocument(email, name){
       courses: [],
     };
 
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
+    const collection = db.collection('Users');
     const result = await collection.insertOne(newDocument);
 
     console.log('Document inserted with _id:', result.insertedId);
   }
   catch(error){
     console.error('Error inserting document:', error);
-    status = "Fail"
+    status = "Fail";
   }
-  finally {
-    // Close the connection
-    await client.close();
-  }
-
   return status;
 }
 
@@ -138,16 +119,11 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
   console.log(req.body.useProfile);
 
   // if use Profile is true, add profile information to fields
-  if(req.body.useProfile == true){
+  if(req.body.useProfile === 'true'){
     // fetch profile from MongoDB
-
-    var userDbName = "MindSpark";
-    var userCollectionName = "Users";
-
-    try{
-      await client.connect();
-      const database = client.db(userDbName);  
-      const userCollection = database.collection(userCollectionName);
+    try{  
+      const userCollection = req.db.collection("Users");
+      console.log("LOL");
       
       const userRecord = await userCollection.findOne({ email: req.body.email });
       if(userRecord){
@@ -167,10 +143,6 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
     }
     catch(error){
       console.error('Error fetching document:', error);
-    }
-    finally {
-      // Close the connection
-      await client.close();
     }
   }
 
@@ -576,9 +548,6 @@ router.post('/create_course', async function(req, res, next) {
     }
   }
 
-  const dbName = "MindSpark";
-  const collectionName = "Courses";
-
   // create course document
   var status = "Success";
   var insertedId = "";
@@ -592,20 +561,17 @@ router.post('/create_course', async function(req, res, next) {
       course_content: content,
     };
 
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
+    const collection = req.db.collection("Courses");
     const result = await collection.insertOne(newDocument);
 
     insertedId = result.insertedId;
 
     // insert a course reference into user document
-    const userCollectionName = "Users"
-    const userCollection = database.collection(userCollectionName);
+    const userCollection = req.db.collection("Users");
     
     const userRecord = await userCollection.findOne({ email: email });
     if(!userRecord){
-      status = await CreateUserDocument(email, name);
+      status = await CreateUserDocument(req.db, email, name);
     }
     
     const filter = { email: email };
@@ -622,10 +588,6 @@ router.post('/create_course', async function(req, res, next) {
   catch(error){
     console.error('Error inserting document:', error);
     status = "Fail";
-  }
-  finally {
-    // Close the connection
-    await client.close();
   }
 
   res.json( {"message": status, "course_id": insertedId} );
@@ -677,13 +639,9 @@ router.post('/regenerate_page', async function(req, res, next) {
     console.log(newPage);
 
     var status = "Success";
-    const dbName = "MindSpark";
-    const collectionName = "Courses";
     
     try{
-      await client.connect();
-      const database = client.db(dbName);
-      const collection = database.collection(collectionName);
+      const collection = req.db.collection("Courses");
 
       const filter = { _id: ObjectId.createFromHexString(courseId)};
 
@@ -706,10 +664,6 @@ router.post('/regenerate_page', async function(req, res, next) {
       console.error('Error updating document:', error);
       status = "Fail";
     }
-    finally {
-      // Close the connection
-      await client.close();
-    }
 
     res.json( {"status": status} );
 })
@@ -717,15 +671,11 @@ router.post('/regenerate_page', async function(req, res, next) {
 router.post('/regenerate_course', async function(req, res, next) {
     console.log(req.body);
     const newRequest = req.body.newRequest;
-    const currentPage = req.body.page;
     const email = req.body.email;
     const courseId = req.body.courseId;
     const courseName = req.body.courseName;
 
     console.log(newRequest);
-
-    const dbName = "MindSpark";
-    const collectionName = "Courses";
 
     // fetch current prompt and outline
     var prompt = "";
@@ -733,9 +683,7 @@ router.post('/regenerate_course', async function(req, res, next) {
 
     var status = "Success";
     try{
-      await client.connect();
-      const database = client.db(dbName);
-      const collection = database.collection(collectionName);
+      const collection = req.db.collection("Courses");
       
       const filter = { _id: ObjectId.createFromHexString(courseId)};
       
@@ -755,10 +703,6 @@ router.post('/regenerate_course', async function(req, res, next) {
     catch(error){
       console.error('Error finding document:', error);
       status = "Fail";
-    }
-    finally {
-      // Close the connection
-      await client.close();
     }
 
     // generate new outline with old outline, current prompt, and new request 
@@ -914,9 +858,7 @@ router.post('/regenerate_course', async function(req, res, next) {
     }
 
     try{
-      await client.connect();
-      const database = client.db(dbName);
-      const collection = database.collection(collectionName);
+      const collection = req.db.collection("Courses");
       
       const filter = { _id: ObjectId.createFromHexString(courseId)};
       const update = { $set: { "course_outline": newOutline, "course_content": content} };
@@ -931,10 +873,6 @@ router.post('/regenerate_course', async function(req, res, next) {
     catch(error){
       console.error('Error inserting document:', error);
       status = "Fail";
-    }
-    finally {
-      // Close the connection
-      await client.close();
     }
 
     // rewrite outline, rewrite course

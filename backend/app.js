@@ -23,10 +23,45 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+const uri = process.env.MONGO_DB;
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+let db;
+
+MongoClient.connect(uri)
+    .then((client) => {
+        console.log('Connected to MongoDB');
+        db = client.db('MindSpark'); // Set the database
+        app.locals.db = db; // Make db accessible globally in the app
+    })
+    .catch((err) => console.error('MongoDB connection error:', err));
+
+app.use('/', (req, res, next) => {
+  req.db = app.locals.db; // Attach db to req for use in routes
+  next();
+}, indexRouter);
+
 app.use('/chatbot', chatbotRouter);
-app.use('/users', usersRouter);
-app.use('/buildCourse', buildCourseRouter);
+
+app.use('/users', (req, res, next) => {
+  req.db = app.locals.db; // Attach db to req for use in routes
+  next();
+}, usersRouter);
+
+app.use('/buildCourse', (req, res, next) => {
+  req.db = app.locals.db; // Attach db to req for use in routes
+  next();
+}, buildCourseRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -42,6 +77,12 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render('error');
+});
+
+process.on('SIGINT', async () => {
+  console.log('Closing MongoDB connection...');
+  await client.close();
+  process.exit(0);
 });
 
 module.exports = app;

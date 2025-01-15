@@ -2,47 +2,19 @@ var express = require('express');
 var router = express.Router();
 const OpenAI = require('openai');
 const path = require('path');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const { ObjectId } = require('mongodb');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, 
 });
-
-const uri = process.env.MONGO_DB;
-
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-}
-
-run().catch(console.dir);
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-
-async function CreateUserDocument(email, name){
-  const dbName = "MindSpark";
-  const collectionName = "Users";
+async function CreateUserDocument(db, email, name){
   var status = "Success";
 
   try{
@@ -52,40 +24,28 @@ async function CreateUserDocument(email, name){
       courses: [],
     };
 
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
+    const collection = db.collection('Users');
     const result = await collection.insertOne(newDocument);
 
     console.log('Document inserted with _id:', result.insertedId);
   }
   catch(error){
     console.error('Error inserting document:', error);
-    status = "Fail"
+    status = "Fail";
   }
-  finally {
-    // Close the connection
-    await client.close();
-  }
-
   return status;
 }
-
 
 /* GET user courses, create user document if none. */
 router.get('/get_courses', async function(req, res, next) {
   // fetch user courses, and create user document if it does not exist
-  const dbName = "MindSpark";
-  const collectionName = "Users";
   var status = "Success";
 
   const email = req.query.email;
   const name = req.query.name;
 
   try {
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
+    const collection = req.db.collection("Users");
 
     const record = await collection.findOne({ email: email });
     
@@ -95,15 +55,12 @@ router.get('/get_courses', async function(req, res, next) {
     if (record) {
       courses = record.courses;
     } else {
-      status = await CreateUserDocument(email, name);
+      status = await CreateUserDocument(req.db, email, name);
     }
   } 
   catch(error){
     console.error('Error fetching courses:', error);
     status = "Fail"
-  }
-  finally {
-    await client.close();
   }
 
   res.json( {courses: courses, status: status} );
@@ -112,18 +69,14 @@ router.get('/get_courses', async function(req, res, next) {
 
 router.get('/get_outline', async function(req, res, next) {
   // fetch outline given course id
-  const dbName = "MindSpark";
-  const collectionName = "Courses";
   var status = "Success";
 
   const courseId = req.query.courseId;
 
   try {
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
+    const collection = req.db.collection("Courses");
 
-    const record = await collection.findOne({ _id: new ObjectId(courseId) });
+    const record = await collection.findOne({ _id: ObjectId.createFromHexString(courseId) });
 
     var course_name = "";
     var course_outline = {"course_outline": []};
@@ -135,15 +88,12 @@ router.get('/get_outline', async function(req, res, next) {
       course_outline = record.course_outline.outline;
       course_description = record.course_outline.course_description;
     } else {
-      status = "Fail"
+      status = "Fail";
     }
   } 
   catch(error){
     console.error('Error fetching course outline:', error);
     status = "Fail"
-  }
-  finally {
-    await client.close();
   }
 
   res.json( {course_name: course_name, course_outline: course_outline, course_description: course_description, status: status} );
@@ -151,19 +101,15 @@ router.get('/get_outline', async function(req, res, next) {
 });
 
 router.get('/get_content', async function(req, res, next) {
-  const dbName = "MindSpark";
-  const collectionName = "Courses";
   var status = "Success";
 
   const courseId = req.query.courseId;
   const topicIndex = req.query.topicIndex;
 
   try {
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
+    const collection = req.db.collection("Courses");
 
-    const record = await collection.findOne({ _id: new ObjectId(courseId) });
+    const record = await collection.findOne({ _id: ObjectId.createFromHexString(courseId) });
 
     var topic_data = {"topic": {},"subtopics": []};
     var outline_data = {"topic": {},"subtopics": []};
@@ -180,40 +126,32 @@ router.get('/get_content', async function(req, res, next) {
     console.error('Error fetching course content:', error);
     status = "Fail"
   }
-  finally {
-    await client.close();
-  }
 
   res.json( {topic_data: topic_data.topic, subtopics: topic_data.subtopics, topic_status: outline_data.topic, subtopic_status: outline_data.subtopics, status: status} );
 
 });
 
 router.delete('/delete_course', async function(req, res, next) {
-  const dbName = "MindSpark";
-  const collectionName = "Courses";
   var status = "Success";
 
   const courseId = req.query.courseId;
   const email = req.query.email;
 
   try {
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
+    const collection = req.db.collection("Courses");
 
-    const record = await collection.findOneAndDelete({ _id: new ObjectId(courseId) });
+    const record = await collection.findOneAndDelete({ _id: ObjectId.createFromHexString(courseId) });
 
     if (!record) {
       status = "Fail"
     }
 
-    const userCollectionName = "Users"
-    const userCollection = database.collection(userCollectionName);
+    const userCollection = req.db.collection("Users");
     
     const userRecord = await userCollection.findOne({ email: email });
     
     const filter = { email: email };
-    const update = { $pull: { courses: {id: new ObjectId(courseId)} } };
+    const update = { $pull: { courses: {id: ObjectId.createFromHexString(courseId)} } };
 
     const updateReferenceResult = await userCollection.findOneAndUpdate(
       filter,
@@ -227,16 +165,11 @@ router.delete('/delete_course', async function(req, res, next) {
     console.error('Error deleting course:', error);
     status = "Fail"
   }
-  finally {
-    await client.close();
-  }
 
   res.json( {status: status} );
 });
 
 router.patch('/update_completion_status', async function(req, res, next) {
-  const dbName = "MindSpark";
-  const collectionName = "Courses";
   var status = "Success";
 
   const courseId = req.body.courseId;
@@ -245,11 +178,9 @@ router.patch('/update_completion_status', async function(req, res, next) {
   const updatedStatus = req.body.updatedStatus;
 
   try {
-    await client.connect();
-    const database = client.db(dbName);
-    const collection = database.collection(collectionName);
+    const collection = req.db.collection("Courses");
 
-    const filter = { _id: new ObjectId(courseId) };
+    const filter = { _id: ObjectId.createFromHexString(courseId) };
     const update = { 
       $set: {
         [`course_outline.outline.${topicIndex}.subtopics.${subtopicIndex}.status`]: updatedStatus
@@ -292,9 +223,6 @@ router.patch('/update_completion_status', async function(req, res, next) {
   catch(error){
     console.error('Error updating completion status:', error);
     status = "Fail"
-  }
-  finally {
-    await client.close();
   }
 
   res.json( {topic_status: status_data.topic, subtopic_status: status_data.subtopics, status: status} );
