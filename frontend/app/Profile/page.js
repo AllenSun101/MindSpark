@@ -19,11 +19,11 @@ export default function Profile(){
                     name: session.user.name,
                 }
             })
-            if(data?.profile?.background != undefined){
-                setBackground(data?.profile?.background);
+            if(data?.record?.profile?.background != undefined){
+                setBackground(data?.record?.profile?.background);
             }
-            if(data?.profile?.learning_preferences != undefined){
-                setLearningPreferences(data?.profile?.learning_preferences);
+            if(data?.record?.profile?.learning_preferences != undefined){
+                setLearningPreferences(data?.record?.profile?.learning_preferences);
             }
             console.log(data);
         }
@@ -36,7 +36,7 @@ export default function Profile(){
     if(!session?.user){
         return(
             <div className="container mx-auto px-8 lg:px-16 py-12">
-                <div className="mt-40 mb-40 text-center">
+                <div className="mt-40 mb-64 text-center">
                     <p>Sign in to access this page!</p>
                 </div>
             </div>

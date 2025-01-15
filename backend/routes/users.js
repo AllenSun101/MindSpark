@@ -51,7 +51,7 @@ router.get('/get_profile', async function(req, res, next) {
     await client.close();
   }
 
-  res.json( {profile: record, status: status} );
+  res.json( {record: record, status: status} );
 
 });
 
@@ -73,7 +73,7 @@ router.post('/update_profile', async function(req, res, next) {
 
     const updateResult = await collection.updateOne(
       {email: email},
-      {$set: { "background": background, "learning_preferences": learningPreferences}},
+      {$set: { "profile.background": background, "profile.learning_preferences": learningPreferences}},
     );
 
   } 

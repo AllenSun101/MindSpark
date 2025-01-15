@@ -17,6 +17,7 @@ export default function BuildCourse(){
     const [formState, setFormState] = useState({
         courseName: "",
         audience: "",
+        useProfile: false,
         learningStyle: "",
         contentFormat: "",
         includedTopics: "",
@@ -36,7 +37,7 @@ export default function BuildCourse(){
     if(!session?.user){
         return(
             <div className="container mx-auto px-8 lg:px-16 py-12">
-                <div className="mt-40 mb-40 text-center">
+                <div className="mt-40 mb-64 text-center">
                     <p>Sign in to access this page!</p>
                 </div>
             </div>
@@ -47,7 +48,7 @@ export default function BuildCourse(){
         return (
             <div className="container mx-auto px-8 lg:px-16 py-12">
                 <h1 className="text-center font-semibold text-3xl mb-6">Build a Course</h1>
-                <div className="mt-40 mb-40 text-center">
+                <div className="mt-40 mb-64 text-center">
                     <p>Loading...</p>
                     <p>Course generation can take a while, depending on depth. Please be patient!</p>
                 </div>
@@ -65,6 +66,13 @@ export default function BuildCourse(){
         setIsChecked(prev => !prev);
     };
 
+    const handleProfileToggle = () => {
+        setFormState(prev => ({
+            ...prev,
+            useProfile: !prev.useProfile,
+        }));    
+    };
+
     function HandleInitialQuestions(event){
         event.preventDefault();
         setLoading(true);
@@ -73,6 +81,7 @@ export default function BuildCourse(){
         const formData = new FormData();
 
         formData.append("courseName", formState.courseName);
+        formData.append("useProfile", formState.useProfile);
         formData.append("audience", formState.audience);
         formData.append("learningStyle", formState.learningStyle);
         formData.append("contentFormat", formState.contentFormat);
@@ -81,6 +90,7 @@ export default function BuildCourse(){
         formData.append("limitedTopics", isChecked);
         formData.append("courseLogistics", formState.courseLogistics);
         formData.append("otherRequests", formState.otherRequests);
+        formData.append("email", session.user.email);
 
         axios.post("http://localhost:3001/buildCourse/follow_ups", formData, {
             headers: {
@@ -132,6 +142,35 @@ export default function BuildCourse(){
                                 value={formState.audience}
                                 onChange={handleInputChange}>
                             </textarea>
+                        </div>
+
+                        <div className="mb-6 flex items-center space-x-4">
+                            <span>And/or, use your Profile to generate the course?</span>
+                            <div className="flex items-center space-x-4">
+                                {/* No on the left */}
+                                <span className={`${formState.useProfile ? 'text-gray-500' : 'text-gray-700'}`}>No</span>
+
+                                {/* Switch */}
+                                <label className="relative inline-flex cursor-pointer items-center">
+                                    <input
+                                        id="switch"
+                                        type="checkbox"
+                                        className="peer sr-only"
+                                        checked={formState.useProfile}
+                                        onChange={handleProfileToggle}
+                                    />
+                                    <div className="h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa] relative">
+                                        <div
+                                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full border border-gray-300 bg-white transition-all ${
+                                            formState.useProfile ? 'translate-x-5' : 'translate-x-0'
+                                        }`}
+                                        ></div>
+                                    </div>
+                                </label>
+
+                                {/* Yes on the right */}
+                                <span className={`${formState.useProfile  ? 'text-gray-700' : 'text-gray-500'}`}>Yes</span>
+                            </div>
                         </div>
 
                         <div className="flex mb-2">

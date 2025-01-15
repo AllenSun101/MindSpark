@@ -88,7 +88,7 @@ router.get('/get_courses', async function(req, res, next) {
     const collection = database.collection(collectionName);
 
     const record = await collection.findOne({ email: email });
-
+    
     var courses = {"courses": []};
     var status = "Success";
 

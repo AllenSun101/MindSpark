@@ -135,6 +135,45 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
     "Other Requests": req.body.otherRequests,
   }
 
+  console.log(req.body.useProfile);
+
+  // if use Profile is true, add profile information to fields
+  if(req.body.useProfile == true){
+    // fetch profile from MongoDB
+
+    var userDbName = "MindSpark";
+    var userCollectionName = "Users";
+
+    try{
+      await client.connect();
+      const database = client.db(userDbName);  
+      const userCollection = database.collection(userCollectionName);
+      
+      const userRecord = await userCollection.findOne({ email: req.body.email });
+      if(userRecord){
+        console.log(userRecord.profile);
+
+        const mappings = {
+          "background": "Background",
+          "learning_preferences": "Learning Preferences",
+        };
+
+        for(const key in userRecord.profile){
+          fields[mappings[key]] = userRecord.profile[key];
+        }
+      }
+      
+      console.log("Fetched document");
+    }
+    catch(error){
+      console.error('Error fetching document:', error);
+    }
+    finally {
+      // Close the connection
+      await client.close();
+    }
+  }
+
   console.log(fields);
 
   var prompt = `You are making an outline of topics for a course on ${req.body.courseName} while considering the ` +
