@@ -9,6 +9,8 @@ export default function Chatbot({ data, subtopicIndex }) {
   const [chatHistory, setChatHistory] = useState([]);
   const [userPrompt, setUserPrompt] = useState("");
 
+  const [loading, setLoading] = useState(false);
+  
   var pageContent = "";
   console.log(data);
   if(subtopicIndex == -1 && data?.topic_data?.topic_content){
@@ -24,6 +26,7 @@ export default function Chatbot({ data, subtopicIndex }) {
 
   function GetResponse(){
     if(userPrompt != ""){
+      setLoading(true);
       axios.post("http://localhost:3001/chatbot/", {
         pageContent: pageContent,
         chatHistory: chatHistory,
@@ -36,6 +39,7 @@ export default function Chatbot({ data, subtopicIndex }) {
           { "sender": "bot", "message": response.data.response }
         ]);
         setUserPrompt("");
+        setLoading(false);
       })
       .catch(error => {
         console.log(error);
@@ -107,6 +111,11 @@ export default function Chatbot({ data, subtopicIndex }) {
                 </div>
               </div>
             ))}
+            {loading && 
+              <div className='text-center text-sm'>
+                <p>Loading...</p>
+              </div>
+            }
           </div>
 
           {/* Input Field */}
