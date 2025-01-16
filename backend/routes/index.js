@@ -71,6 +71,7 @@ router.get('/get_outline', async function(req, res, next) {
   // fetch outline given course id
   var status = "Success";
 
+  const email = req.query.email;
   const courseId = req.query.courseId;
 
   try {
@@ -83,20 +84,34 @@ router.get('/get_outline', async function(req, res, next) {
     var course_description = "";
     var status = "Success";
 
+    var unauthorized = false;
+
     if (record) {
-      course_name = record.course_name;
-      course_outline = record.course_outline.outline;
-      course_description = record.course_outline.course_description;
+      // if different email, then restrict access
+      if(record.email != email){
+        unauthorized = true;
+      }
+      else{
+        course_name = record.course_name;
+        course_outline = record.course_outline.outline;
+        course_description = record.course_outline.course_description;
+      }
     } else {
       status = "Fail";
     }
   } 
   catch(error){
     console.error('Error fetching course outline:', error);
-    status = "Fail"
+    status = "Fail";
   }
 
-  res.json( {course_name: course_name, course_outline: course_outline, course_description: course_description, status: status} );
+  console.log(unauthorized);
+
+  if(unauthorized){
+    return res.json( { unauthorized: true } );
+  }
+
+  res.json( { unauthorized: false, course_name: course_name, course_outline: course_outline, course_description: course_description, status: status } );
 
 });
 
@@ -127,7 +142,7 @@ router.get('/get_content', async function(req, res, next) {
     status = "Fail"
   }
 
-  res.json( {topic_data: topic_data.topic, subtopics: topic_data.subtopics, topic_status: outline_data.topic, subtopic_status: outline_data.subtopics, status: status} );
+  res.json( { topic_data: topic_data.topic, subtopics: topic_data.subtopics, topic_status: outline_data.topic, subtopic_status: outline_data.subtopics, status: status } );
 
 });
 

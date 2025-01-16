@@ -14,15 +14,25 @@ export default function Course(){
     const { data: session } = useSession();
 
     const [courseData, setCourseData] = useState();
+    const [unauthorized, setUnauthorized] = useState(false);
 
     useEffect(() => {
         const fetchOutline = async () => {
             const { data } = await axios.get("http://localhost:3001/get_outline", {
                 params: {
-                    courseId: courseId
+                    courseId: courseId,
+                    email: session.user.email,
                 }
             })
-            setCourseData(data);
+
+            console.log(data);
+
+            if(data.unauthorized){
+                setUnauthorized(true);
+            }
+            else{
+                setCourseData(data);
+            }
         };
         
         if (session) {
@@ -39,6 +49,17 @@ export default function Course(){
             </div>
         )
     }
+
+    if(unauthorized){
+        return(
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <div className="mt-40 mb-64 text-center">
+                    <p>Sorry, you are not authorized to access this page.</p>
+                </div>
+            </div>
+        )
+    }
+
     if(!courseData){
         return(
             <div className="container mx-auto px-8 lg:px-16 py-12">
