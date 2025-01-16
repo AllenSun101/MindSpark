@@ -120,6 +120,7 @@ router.get('/get_content', async function(req, res, next) {
 
   const courseId = req.query.courseId;
   const topicIndex = req.query.topicIndex;
+  const email = req.query.email;
 
   try {
     const collection = req.db.collection("Courses");
@@ -130,9 +131,17 @@ router.get('/get_content', async function(req, res, next) {
     var outline_data = {"topic": {},"subtopics": []};
     var status = "Success";
 
+    var unauthorized = false;
+
     if (record) {
-      topic_data = record.course_content[topicIndex]
-      outline_data = record.course_outline.outline[topicIndex]
+      // if different email, then restrict access
+      if(record.email != email){
+        unauthorized = true;
+      }
+      else{
+        topic_data = record.course_content[topicIndex]
+        outline_data = record.course_outline.outline[topicIndex]
+      }
     } else {
       status = "Fail"
     }    
@@ -142,7 +151,11 @@ router.get('/get_content', async function(req, res, next) {
     status = "Fail"
   }
 
-  res.json( { topic_data: topic_data.topic, subtopics: topic_data.subtopics, topic_status: outline_data.topic, subtopic_status: outline_data.subtopics, status: status } );
+  if(unauthorized){
+    return res.json( { unauthorized: true } );
+  }
+
+  res.json( { unauthorized: false, topic_data: topic_data.topic, subtopics: topic_data.subtopics, topic_status: outline_data.topic, subtopic_status: outline_data.subtopics, status: status } );
 
 });
 

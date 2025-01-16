@@ -25,8 +25,6 @@ export default function Course(){
                 }
             })
 
-            console.log(data);
-
             if(data.unauthorized){
                 setUnauthorized(true);
             }

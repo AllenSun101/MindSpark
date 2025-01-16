@@ -17,16 +17,24 @@ export default function Content(){
     const { data: session } = useSession();
 
     const [topicContent, setTopicContent] = useState();
+    const [unauthorized, setUnauthorized] = useState(false);
 
     useEffect(() => {
         const fetchContent = async () => {
             const { data } = await axios.get("http://localhost:3001/get_content", {
                 params: {
                     courseId: courseId,
-                    topicIndex: topicIndex
+                    topicIndex: topicIndex,
+                    email: session.user.email,
                 }
             })
-            setTopicContent(data);
+
+            if(data.unauthorized){
+                setUnauthorized(true);
+            }
+            else{
+                setTopicContent(data);
+            }
         }
         
         if (session) {
@@ -43,6 +51,17 @@ export default function Content(){
             </div>
         )
     }
+
+    if(unauthorized){
+        return(
+            <div className="container mx-auto px-8 lg:px-16 py-12">
+                <div className="mt-40 mb-64 text-center">
+                    <p>Sorry, you are not authorized to access this page.</p>
+                </div>
+            </div>
+        )
+    }
+
     if(!topicContent){
         return(
             <div className="container mx-auto px-8 lg:px-16 py-12">
