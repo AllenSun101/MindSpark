@@ -26,12 +26,19 @@ export default function BuildCourse(){
         features: {
             "Practice Problems": false,
             "Flash Cards": false,
-            "Games": false,
+            "Learnings Games": false,
             "Simulations": false,
             "Videos": false,
             "External Links": false,
             "Narrated Slides": false,
             "Images and Diagrams": false,
+        },
+        feature_extensions: {
+            "Practice Problems": {
+                "Separate Pages or Integrated or end of unit?": "answer",
+                "Difficulty": "answer", 
+                "Notes": "answer",
+            },
         }
     });
     const [loading, setLoading] = useState(false);
@@ -80,6 +87,17 @@ export default function BuildCourse(){
         setFormState(prev => ({
             ...prev,
             useProfile: !prev.useProfile,
+        }));    
+    };
+
+    const handleAddOnsToggle = (event) => {
+        const name = event.target.name;
+        setFormState(prev => ({
+            ...prev,
+            features: {
+                ...prev.features,
+                [name]: !prev.features[name], // Dynamically toggle the specific feature
+            },
         }));    
     };
 
@@ -196,7 +214,7 @@ export default function BuildCourse(){
                         </div>
 
                         <div className="flex mb-2">
-                            <label>How should content be formatted?</label>
+                            <label>How should content be formatted and organized?</label>
                         </div>
                         <div className="flex mb-6">
                             <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
@@ -291,10 +309,62 @@ export default function BuildCourse(){
                             </textarea>
                         </div>
 
-                        <div className="flex mb-2">
-                            <label>Include the following?</label>
-                            <p>Loop through possibilities, checkbox</p>
-                            <p>If checked, include more specific fields and extra notes</p>
+                        <div className="mb-4">
+                            <span className="text-3xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-[#d7acfc] to-[#7fc3fa]">Add-Ons</span>
+                            <p className="mt-2">Include the following?</p>
+                        </div>
+
+                        <div>
+                            {Object.entries(formState.features).map(([key, value]) => {
+                                return(
+                                    <div key={key}>
+                                        <div className="flex mb-2">
+                                            <div className="mb-6 flex items-center space-x-4">
+                                                <span>{key}</span>
+                                                <div className="flex items-center space-x-4">
+                                                    {/* No on the left */}
+                                                    <span className={`${formState.features.key ? 'text-gray-500' : 'text-gray-700'}`}>No</span>
+
+                                                    {/* Switch */}
+                                                    <label className="relative inline-flex cursor-pointer items-center">
+                                                        <input
+                                                            id="switch"
+                                                            type="checkbox"
+                                                            className="peer sr-only"
+                                                            checked={formState.features.key}
+                                                            name={key}
+                                                            onChange={handleAddOnsToggle}
+                                                        />
+
+                                                        <div className="h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa] relative">
+                                                            <div
+                                                            className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full border border-gray-300 bg-white transition-all ${
+                                                                formState.features.key ? 'translate-x-5' : 'translate-x-0'
+                                                            }`}
+                                                            ></div>
+                                                        </div>
+                                                    </label>
+
+                                                    {/* Yes on the right */}
+                                                    <span className={`${formState.features.key  ? 'text-gray-700' : 'text-gray-500'}`}>Yes</span>
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                        {value && 
+                                            <div>
+                                                {Object.entries(formState.feature_extensions.key).map(([extension_key, value]) => {
+                                                    <div>
+                                                        <p>{extension_key}</p>
+                                                    </div>
+                                                })}
+                                            </div>
+                                        }
+                                    </div>
+                                )
+                            })}
                         </div>
                         
                         <div className="mb-2">
