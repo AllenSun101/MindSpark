@@ -180,6 +180,9 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
       promptFields[key] = fields[key];
     }
   }
+
+  // prompt fields for activities that need to be integrated into timeline (images/diagrams)
+  // or we could insert after the main content is generated.
     
   prompt += `These request fields are empty: ${emptyFields} What follow-up questions would you ask to generate a personalized course? ` +
     `Only generate insightful questions, and try to generate as few as possible. ` +

@@ -26,18 +26,33 @@ export default function BuildCourse(){
         features: {
             "Practice Problems": false,
             "Flash Cards": false,
-            "Learnings Games": false,
+            "Learning Games": false,
             "Simulations": false,
             "Videos": false,
             "External Links": false,
             "Narrated Slides": false,
             "Images and Diagrams": false,
         },
-        feature_extensions: {
+        featureExtensions: {
             "Practice Problems": {
-                "Separate Pages or Integrated or end of unit?": "answer",
-                "Difficulty": "answer", 
-                "Notes": "answer",
+                "How often should practice problems be given?": "answer",
+                "Additional Comments (Difficulty, Formatting, etc.)": "answer",
+            },
+            "Flash Cards": {
+                "How often should flash cards be given?": "answer",
+            },
+            "Learning Games": {
+                "How often should simulations be given?": "answer",
+            },
+            "Simulations": {
+                "How often should simulations be given?": "answer",
+            },
+            "Videos": {
+                "How often should simulations be given?": "answer",
+                "Video relevance": "",
+            },
+            "External Links": {
+                "How often should simulations be given?": "answer",
             },
         }
     });
@@ -119,6 +134,8 @@ export default function BuildCourse(){
         formData.append("courseLogistics", formState.courseLogistics);
         formData.append("otherRequests", formState.otherRequests);
         formData.append("email", session.user.email);
+        formData.append("features", formState.features);
+        formData.append("featureExtensions", formState.featureExtensions)
 
         axios.post("http://localhost:3001/buildCourse/follow_ups", formData, {
             headers: {
@@ -315,55 +332,65 @@ export default function BuildCourse(){
                         </div>
 
                         <div>
-                            {Object.entries(formState.features).map(([key, value]) => {
-                                return(
-                                    <div key={key}>
-                                        <div className="flex mb-2">
-                                            <div className="mb-6 flex items-center space-x-4">
-                                                <span>{key}</span>
-                                                <div className="flex items-center space-x-4">
-                                                    {/* No on the left */}
-                                                    <span className={`${formState.features.key ? 'text-gray-500' : 'text-gray-700'}`}>No</span>
+                        {Object.entries(formState.features).map(([key, value]) => {
+                            return (
+                                <div key={key}>
+                                    <div className="flex mb-2">
+                                        <div className="mb-2 flex items-center space-x-4">
+                                            <span>{key}</span>
+                                            <div className="flex items-center space-x-4">
+                                                {/* No on the left */}
+                                                <span
+                                                    className={`${
+                                                        formState.features[key] ? "text-gray-500" : "text-gray-700"
+                                                    }`}
+                                                >
+                                                    No
+                                                </span>
 
-                                                    {/* Switch */}
-                                                    <label className="relative inline-flex cursor-pointer items-center">
-                                                        <input
-                                                            id="switch"
-                                                            type="checkbox"
-                                                            className="peer sr-only"
-                                                            checked={formState.features.key}
-                                                            name={key}
-                                                            onChange={handleAddOnsToggle}
-                                                        />
-
-                                                        <div className="h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa] relative">
-                                                            <div
+                                                {/* Switch */}
+                                                <label className="relative inline-flex cursor-pointer items-center">
+                                                    <input
+                                                        id="switch"
+                                                        type="checkbox"
+                                                        className="peer sr-only"
+                                                        checked={formState.features[key]}
+                                                        name={key}
+                                                        onChange={handleAddOnsToggle}
+                                                    />
+                                                    <div className="h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa] relative">
+                                                        <div
                                                             className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full border border-gray-300 bg-white transition-all ${
-                                                                formState.features.key ? 'translate-x-5' : 'translate-x-0'
+                                                                formState.features[key] ? "translate-x-5" : "translate-x-0"
                                                             }`}
-                                                            ></div>
-                                                        </div>
-                                                    </label>
-
-                                                    {/* Yes on the right */}
-                                                    <span className={`${formState.features.key  ? 'text-gray-700' : 'text-gray-500'}`}>Yes</span>
-                                                </div>
-
-                                            </div>
-
-                                        </div>
-
-                                        {value && 
-                                            <div>
-                                                {Object.entries(formState.feature_extensions.key).map(([extension_key, value]) => {
-                                                    <div>
-                                                        <p>{extension_key}</p>
+                                                        ></div>
                                                     </div>
-                                                })}
+                                                </label>
+
+                                                {/* Yes on the right */}
+                                                <span
+                                                    className={`${
+                                                        formState.features[key] ? "text-gray-700" : "text-gray-500"
+                                                    }`}
+                                                >
+                                                    Yes
+                                                </span>
                                             </div>
-                                        }
+                                        </div>
                                     </div>
-                                )
+
+                                        {value && formState.featureExtensions[key] && (
+                                            <div className="pl-4 mb-4">
+                                                {Object.entries(formState.featureExtensions[key]).map(([extensionKey, extensionValue]) => (
+                                                    <div key={extensionKey}>
+                                                        <p>{extensionKey}</p>
+                                                        <p>{extensionValue}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
                             })}
                         </div>
                         
