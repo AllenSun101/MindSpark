@@ -25,6 +25,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
     const [regeneratePage, setRegeneratePage] = useState(false);
     const [regenerateRequests, setRegenerateRequests] = useState('');
     const [regenerateResult, setRegenerateResult] = useState();
+    const [regenerateLoading, setRegenerateLoading] = useState(false);
 
     const topic = data.topic_data.topic_name;
 
@@ -59,6 +60,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
         else{
             currentPage = subtopics[selectedSubtopic].subtopic_content;
         }
+        setRegenerateLoading(true);
         var { data } = await axios.post("http://localhost:3001/buildCourse/regenerate_page", {
             email: session.user.email,
             courseId: courseId,
@@ -69,6 +71,7 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
         })
         setRegeneratePage(false);
         setRegenerateResult(data.status);
+        setRegenerateLoading(false);
     };
 
     function SideBar(){
@@ -242,19 +245,24 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                             onChange={handleRegenerateRequestsChange}
                         >
                         </textarea>
+                        {regenerateLoading && 
+                            <div className="mt-1 mb-1 text-center">
+                                <p>Loading...</p>
+                            </div>
+                        }
                         <div className="flex justify-between">
-                        <button
-                            className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg"
-                            onClick={handleRegeneratePage}
-                        >
-                            Regenerate
-                        </button>
-                        <button
-                            className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
-                            onClick={() => {setRegeneratePage(false)}}
-                        >
-                            Cancel
-                        </button>
+                            <button
+                                className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg"
+                                onClick={handleRegeneratePage}
+                            >
+                                Regenerate
+                            </button>
+                            <button
+                                className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
+                                onClick={() => {setRegeneratePage(false)}}
+                            >
+                                Cancel
+                            </button>
                         </div>
                     </div>
                 </div>

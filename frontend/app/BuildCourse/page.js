@@ -24,6 +24,7 @@ export default function BuildCourse(){
         courseLogistics: "",
         otherRequests: "", 
         features: {
+            "Guided Examples": false,
             "Practice Problems": false,
             "Flash Cards": false,
             "Learning Games": false,
@@ -33,26 +34,43 @@ export default function BuildCourse(){
             "Narrated Slides": false,
             "Images and Diagrams": false,
         },
+        featureDescriptions: {
+            "Guided Examples": "These can be short example problems or longer walkthroughs!",
+            "Practice Problems": "These can be true/false, multiple choice, free response, and multi-part! You can also get feedback with our MindSpark Grader!",
+            "Learning Games": "Make learning fun with our personalized learning games!",
+            "Simulations": "Add practical value to your learning with immersive MindSpark Simulations!",
+            "Narrated Slides": "Accompanying narrated lecture slides!",
+            "Images and Diagrams": "Integrate visual content into your course!",
+        },
         featureExtensions: {
+            "Guided Examples": {
+                "How often should guided examples be given?": {type: "buttons", options: ["Each Page", "End of Unit", "No Preference"], value: "No Preference"},
+                "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},
+            },
             "Practice Problems": {
-                "How often should practice problems be given?": "answer",
-                "Additional Comments (Difficulty, Formatting, etc.)": "answer",
+                "How often should practice problems be given?": {type: "buttons", options: ["Each Page", "End of Unit", "No Preference"], value: "No Preference"},
+                "Use MindSpark Grader?": {type: "buttons", options: ["Yes", "No"], value: "Yes"},
+                "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},
             },
             "Flash Cards": {
-                "How often should flash cards be given?": "answer",
+                "How often should flash cards be provided?": {type: "buttons", options: ["Each Page", "End of Unit", "No Preference"], value: "No Preference"},
+                "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},         
             },
             "Learning Games": {
-                "How often should simulations be given?": "answer",
+                "How often should practice problems be given?": {type: "buttons", options: ["Between Pages", "End of Unit", "No Preference"], value: "No Preference"},
+                "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},
             },
             "Simulations": {
-                "How often should simulations be given?": "answer",
+                "How often should simulations be given?": {type: "buttons", options: ["Between Pages", "End of Unit", "No Preference"], value: "No Preference"},
+                "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},
             },
             "Videos": {
-                "How often should simulations be given?": "answer",
-                "Video relevance": "",
+                "How often should videos be given?": {type: "buttons", options: ["Each Page", "Between Pages", "End of Unit", "No Preference"], value: "No Preference"},
+                "Additional Comments (Purpose, Content, etc.)": {type: "text", value: ""},
             },
             "External Links": {
-                "How often should simulations be given?": "answer",
+                "How often external links be given?": {type: "buttons", options: ["Each Page", "End of Unit", "No Preference"], value: "No Preference"},
+                "Additional Comments (Purpose, Content, etc.)": {type: "text", value: ""},
             },
         }
     });
@@ -63,6 +81,18 @@ export default function BuildCourse(){
         setFormState((prevState) => ({
             ...prevState,
             [name]: value,
+        }));
+    };
+
+    const handleFeatureValueChange = (event) => {
+        console.log(event.target);
+        const { name, value } = event.target;
+        setFormState((prevState) => ({
+            ...prev,
+            featureExtensions: {
+                ...prev.features,
+                [name]: !prev.features[name], // Dynamically toggle the specific feature
+            },
         }));
     };
 
@@ -378,13 +408,26 @@ export default function BuildCourse(){
                                             </div>
                                         </div>
                                     </div>
-
                                         {value && formState.featureExtensions[key] && (
-                                            <div className="pl-4 mb-4">
+                                            <div className="pl-4 mb-4" key={key}>
                                                 {Object.entries(formState.featureExtensions[key]).map(([extensionKey, extensionValue]) => (
                                                     <div key={extensionKey}>
-                                                        <p>{extensionKey}</p>
-                                                        <p>{extensionValue}</p>
+                                                        <p className="mb-1">{extensionKey}</p>
+                                                        {extensionValue.type == "buttons" &&
+                                                            <div className="mb-1">
+                                                                <p>Buttons</p>
+                                                            </div>
+                                                        }
+                                                        {extensionValue.type == "text" &&
+                                                            <div className="flex mb-1">
+                                                                <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
+                                                                    name={extensionKey} 
+                                                                    rows="3"
+                                                                    value={extensionValue.value}
+                                                                    onChange={handleFeatureValueChange}>
+                                                                </textarea>
+                                                            </div>
+                                                        }
                                                     </div>
                                                 ))}
                                             </div>

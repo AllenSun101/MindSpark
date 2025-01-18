@@ -16,6 +16,7 @@ export default function CourseHomePage({data, courseId, session}){
     const [regenerateRequests, setRegenerateRequests] = useState('');
     const [showRegenerateCourse, setShowRegenerateCourse] = useState(false);
     const [regenerateResult, setRegenerateResult] = useState();
+    const [regenerateLoading, setRegenerateLoading] = useState(false);
 
     const courseName = data.course_name;
     const [courseDescription, setCourseDescription] = useState(data.course_description);
@@ -39,6 +40,7 @@ export default function CourseHomePage({data, courseId, session}){
     };
 
     const handleRegenerateCourse = async (event) => {
+        setRegenerateLoading(true);
         var { data } = await axios.post("http://localhost:3001/buildCourse/regenerate_course", {
             email: session.user.email,
             courseId: courseId,
@@ -47,6 +49,7 @@ export default function CourseHomePage({data, courseId, session}){
         })
         setShowRegenerateCourse(false);
         setRegenerateResult(data.status);
+        setRegenerateLoading(false);
         
         // refetch data, change desc and topics to state
         var { data } = await axios.get("http://localhost:3001/get_outline", {
@@ -254,19 +257,24 @@ export default function CourseHomePage({data, courseId, session}){
                         onChange={handleRegenerateRequestsChange}
                     >
                     </textarea>
+                    {regenerateLoading && 
+                            <div className="mt-1 mb-1 text-center">
+                                <p>Loading...</p>
+                            </div>
+                        }
                     <div className="flex justify-between">
-                    <button
-                        className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg"
-                        onClick={handleRegenerateCourse}
-                    >
-                        Regenerate
-                    </button>
-                    <button
-                        className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
-                        onClick={() => {setShowRegenerateCourse(false)}}
-                    >
-                        Cancel
-                    </button>
+                        <button
+                            className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg"
+                            onClick={handleRegenerateCourse}
+                        >
+                            Regenerate
+                        </button>
+                        <button
+                            className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
+                            onClick={() => {setShowRegenerateCourse(false)}}
+                        >
+                            Cancel
+                        </button>
                     </div>
                 </div>
                 </div>
