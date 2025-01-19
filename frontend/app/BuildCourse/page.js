@@ -49,7 +49,7 @@ export default function BuildCourse(){
             },
             "Practice Problems": {
                 "How often should practice problems be given?": {type: "buttons", options: ["Each Page", "End of Unit", "No Preference"], value: "No Preference"},
-                "Use MindSpark Grader?": {type: "buttons", options: ["Yes", "No"], value: "Yes"},
+                "Use MindSpark Grader to check work?": {type: "buttons", options: ["Yes", "No"], value: "Yes"},
                 "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},
             },
             "Flash Cards": {
@@ -84,14 +84,19 @@ export default function BuildCourse(){
         }));
     };
 
-    const handleFeatureValueChange = (event) => {
-        console.log(event.target);
+    const handleFeatureValueChange = (event, category) => {
         const { name, value } = event.target;
-        setFormState((prevState) => ({
+        setFormState((prev) => ({
             ...prev,
             featureExtensions: {
-                ...prev.features,
-                [name]: !prev.features[name], // Dynamically toggle the specific feature
+                ...prev.featureExtensions,
+                [category]: {
+                    ...prev.featureExtensions?.[category],
+                    [name]: {
+                        ...prev.featureExtensions?.[category]?.[name],
+                        value: value,
+                    },
+                },
             },
         }));
     };
@@ -412,19 +417,34 @@ export default function BuildCourse(){
                                             <div className="pl-4 mb-4" key={key}>
                                                 {Object.entries(formState.featureExtensions[key]).map(([extensionKey, extensionValue]) => (
                                                     <div key={extensionKey}>
-                                                        <p className="mb-1">{extensionKey}</p>
                                                         {extensionValue.type == "buttons" &&
-                                                            <div className="mb-1">
-                                                                <p>Buttons</p>
+                                                            <div className="mb-2 flex">
+                                                                <p className="mb-1 mr-4">{extensionKey}</p>
+                                                                <div className="flex space-x-4">
+                                                                    {extensionValue.options.map((option) => (
+                                                                        <label key={option} className="flex items-center space-x-2">
+                                                                            <input
+                                                                                type="radio"
+                                                                                name={extensionKey}
+                                                                                value={option}
+                                                                                checked={extensionValue.value === option}
+                                                                                onChange={(event) => handleFeatureValueChange(event, key)}
+                                                                                className="form-radio h-4 w-4 text-blue-600"
+                                                                            />
+                                                                            <span>{option}</span>
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
                                                             </div>
                                                         }
                                                         {extensionValue.type == "text" &&
-                                                            <div className="flex mb-1">
+                                                            <div className="mb-2">
+                                                                <p className="mb-1">{extensionKey}</p>
                                                                 <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
                                                                     name={extensionKey} 
                                                                     rows="3"
                                                                     value={extensionValue.value}
-                                                                    onChange={handleFeatureValueChange}>
+                                                                    onChange={(event) => handleFeatureValueChange(event, key)}>
                                                                 </textarea>
                                                             </div>
                                                         }
