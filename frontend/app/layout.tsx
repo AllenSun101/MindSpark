@@ -23,9 +23,13 @@ export default function RootLayout({
         className={`${openSans.className} ${openSans.className} antialiased`}
       >
         <SessionProvider>
-          <Navbar />
-            {children}
-          <Footer />
+          <div className="flex flex-col min-h-screen">
+            <Navbar />
+              <div className="flex-grow">
+                {children}
+              </div>
+            <Footer />
+          </div>
         </SessionProvider>
       </body>
     </html>
