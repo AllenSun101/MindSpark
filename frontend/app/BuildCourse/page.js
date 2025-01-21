@@ -199,7 +199,7 @@ export default function BuildCourse(){
                         only. Once you submit, follow-up questions will appear so that we can better understand your needs!
                     </h2>
                     <form onSubmit={HandleInitialQuestions}>
-                        <div className="flex mb-6">
+                        <div className="flex mb-6 items-center">
                             <label className="mr-4">Course Name: </label>
                             <input type="text" className="border border-gray-900 w-full max-w-xl py-1 px-2 rounded-lg border-2" 
                                 name="courseName" 
@@ -239,11 +239,11 @@ export default function BuildCourse(){
                                         checked={formState.useProfile}
                                         onChange={handleProfileToggle}
                                     />
-                                    <div className="h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa] relative">
+                                    <div className="relative h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa]">
                                         <div
-                                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full border border-gray-300 bg-white transition-all ${
-                                            formState.useProfile ? 'translate-x-5' : 'translate-x-0'
-                                        }`}
+                                            className={`absolute top-1/2 left-0 transform -translate-y-1/2 transition-transform duration-200 ease-in-out h-5 w-5 rounded-full border border-gray-300 bg-white ${
+                                                formState.useProfile ? "translate-x-[1.375rem]" : "translate-x-0"
+                                            }`}
                                         ></div>
                                     </div>
                                 </label>
@@ -335,11 +335,11 @@ export default function BuildCourse(){
                                         checked={isChecked}
                                         onChange={handleToggle}
                                     />
-                                    <div className="h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa] relative">
+                                    <div className="relative h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa]">
                                         <div
-                                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full border border-gray-300 bg-white transition-all ${
-                                            isChecked ? 'translate-x-5' : 'translate-x-0'
-                                        }`}
+                                            className={`absolute top-1/2 left-0 transform -translate-y-1/2 transition-transform duration-200 ease-in-out h-5 w-5 rounded-full border border-gray-300 bg-white ${
+                                                isChecked ? "translate-x-[1.375rem]" : "translate-x-0"
+                                            }`}
                                         ></div>
                                     </div>
                                 </label>
@@ -393,10 +393,10 @@ export default function BuildCourse(){
                                                         name={key}
                                                         onChange={handleAddOnsToggle}
                                                     />
-                                                    <div className="h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa] relative">
+                                                    <div className="relative h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa]">
                                                         <div
-                                                            className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full border border-gray-300 bg-white transition-all ${
-                                                                formState.features[key] ? "translate-x-5" : "translate-x-0"
+                                                            className={`absolute top-1/2 left-0 transform -translate-y-1/2 transition-transform duration-200 ease-in-out h-5 w-5 rounded-full border border-gray-300 bg-white ${
+                                                                formState.features[key] ? "translate-x-[1.375rem]" : "translate-x-0"
                                                             }`}
                                                         ></div>
                                                     </div>
