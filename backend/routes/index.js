@@ -176,8 +176,6 @@ router.delete('/delete_course', async function(req, res, next) {
 
     const userCollection = req.db.collection("Users");
     
-    const userRecord = await userCollection.findOne({ email: email });
-    
     const filter = { email: email };
     const update = { $pull: { courses: {id: ObjectId.createFromHexString(courseId)} } };
 
@@ -191,6 +189,53 @@ router.delete('/delete_course', async function(req, res, next) {
   } 
   catch(error){
     console.error('Error deleting course:', error);
+    status = "Fail"
+  }
+
+  res.json( {status: status} );
+});
+
+router.patch('/rename_course', async function(req, res, next) {
+  var status = "Success";
+
+  const courseId = req.body.courseId;
+  const email = req.body.email;
+  const newCourseName = req.body.newCourseName;
+
+  try {
+    const collection = req.db.collection("Courses");
+
+    const filter = { _id: ObjectId.createFromHexString(courseId) };
+    const update = { 
+      $set: {
+        ["course_name"]: newCourseName
+      } 
+    };
+
+    const updateReferenceResult = await collection.findOneAndUpdate(
+      filter,
+      update,
+      { returnDocument: "after" }
+    );
+
+    const userCollection = req.db.collection("Users");
+    
+    const userFilter = { email: email, "courses.id": ObjectId.createFromHexString(courseId) };
+    const userUpdate = {
+      $set: {
+        "courses.$.name": newCourseName
+      }
+    };
+
+    const userUpdateReferenceResult = await userCollection.findOneAndUpdate(
+      userFilter,
+      userUpdate,
+      { returnDocument: "after" } // Return the updated document
+    );
+
+  } 
+  catch(error){
+    console.error('Error renaming course:', error);
     status = "Fail"
   }
 

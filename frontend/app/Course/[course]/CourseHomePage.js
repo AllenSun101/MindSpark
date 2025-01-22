@@ -13,12 +13,16 @@ export default function CourseHomePage({data, courseId, session}){
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [deleteResult, setDeleteResult] = useState();
 
+    const [showRenamePrompt, setShowRenamePrompt] = useState(false);
+    const [newCourseName, setNewCourseName] = useState('');
+    const [renameResult, setRenameResult] = useState();
+
     const [regenerateRequests, setRegenerateRequests] = useState('');
     const [showRegenerateCourse, setShowRegenerateCourse] = useState(false);
     const [regenerateResult, setRegenerateResult] = useState();
     const [regenerateLoading, setRegenerateLoading] = useState(false);
 
-    const courseName = data.course_name;
+    const [courseName, setCourseName] = useState(data.course_name);
     const [courseDescription, setCourseDescription] = useState(data.course_description);
 
     const [topics, setTopics] = useState(data.course_outline);
@@ -34,6 +38,29 @@ export default function CourseHomePage({data, courseId, session}){
         setShowDeleteConfirmation(false);
         setDeleteResult(data.status);
     };
+
+    const handleRenameCourse = async () => {
+        if(newCourseName.length == 0){
+            return;
+        }
+        axios.patch("http://localhost:3001/rename_course", {
+            courseId: courseId,
+            email: session.user.email,
+            newCourseName: newCourseName
+        })
+        .then(response => {
+            console.log(response.data);
+            if(response.data.status == 'Success'){
+                setCourseName(newCourseName);
+            }
+            setShowRenamePrompt(false);
+            setNewCourseName('');
+            setRenameResult(response.data.status);
+        })
+        .catch(error => {
+            console.log(error);
+        })
+    }
 
     const handleRegenerateRequestsChange = (event) => {
         setRegenerateRequests(event.target.value);
@@ -166,19 +193,28 @@ export default function CourseHomePage({data, courseId, session}){
         return(
             <div>
                 <h1 className="text-2xl font-semibold mb-4">Course Settings</h1>
-                <div>
-                    <button className="mb-4 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-2 rounded-lg"
-                    onClick={() => {setShowRegenerateCourse(true)}}
-                    >
-                        Regenerate Course
-                    </button>
-                </div>
-                <div>
-                    <button className="bg-red-500 hover:bg-red-600 p-2 rounded-lg"
-                    onClick={() => {setShowDeleteConfirmation(true)}}
-                    >
-                        Delete Course
-                    </button>
+                <div className="space-y-4">
+                    <div>
+                        <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-2 rounded-lg"
+                        onClick={() => {setShowRegenerateCourse(true)}}
+                        >
+                            Regenerate Course
+                        </button>
+                    </div>
+                    <div>
+                        <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-2 rounded-lg"
+                        onClick={() => {setShowRenamePrompt(true)}}
+                        >
+                            Rename Course
+                        </button>
+                    </div>
+                    <div>
+                        <button className="bg-red-500 hover:bg-red-600 p-2 rounded-lg"
+                        onClick={() => {setShowDeleteConfirmation(true)}}
+                        >
+                            Delete Course
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -246,6 +282,32 @@ export default function CourseHomePage({data, courseId, session}){
                 </div>
             )}
 
+            {showRenamePrompt && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-1/4">
+                    <p className="text-lg mb-2 text-center">New Course Name:</p>
+                    <input className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2 mb-4"
+                        value={newCourseName}
+                        onChange={(e) => {setNewCourseName(e.target.value)}}
+                    />
+                    <div className="flex justify-between">
+                    <button
+                        className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg w-24"
+                        onClick={handleRenameCourse}
+                    >
+                        Confirm
+                    </button>
+                    <button
+                        className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
+                        onClick={() => {setShowRenamePrompt(false); setNewCourseName('')}}
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </div>
+                </div>
+            )}
+
             {showRegenerateCourse && (
                 <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
                 <div className="bg-white rounded-lg p-6 w-100">
@@ -296,6 +358,19 @@ export default function CourseHomePage({data, courseId, session}){
                             Close
                         </button>
                     )}
+                </div>
+                </div>
+            )}
+
+            {renameResult && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-80 items-center flex flex-col">
+                    <p className="text-lg mb-4 text-center">{renameResult == "Success" ? "Successfully renamed course!" : "Error renaming course"}</p>
+                    <button className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition"
+                    onClick={() => {setRenameResult()}}
+                    >
+                        Close
+                    </button>
                 </div>
                 </div>
             )}
