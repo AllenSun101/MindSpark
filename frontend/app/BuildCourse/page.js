@@ -169,8 +169,8 @@ export default function BuildCourse(){
         formData.append("courseLogistics", formState.courseLogistics);
         formData.append("otherRequests", formState.otherRequests);
         formData.append("email", session.user.email);
-        formData.append("features", formState.features);
-        formData.append("featureExtensions", formState.featureExtensions)
+        formData.append("features", JSON.stringify(formState.features));
+        formData.append("featureExtensions", JSON.stringify(formState.featureExtensions))
 
         axios.post("http://localhost:3001/buildCourse/follow_ups", formData, {
             headers: {

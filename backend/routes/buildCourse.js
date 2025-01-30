@@ -38,70 +38,75 @@ async function CreateUserDocument(db, email, name){
   return status;
 }
 
+async function ExtractDocumentInsights(file, courseName){
+  // parse file text and extract useful info + list of topics
+  const fileType = file.mimetype;
+  var extractedText = "";
+
+  if (fileType === 'text/plain') {
+    extractedText = file.buffer.toString('utf8');
+  } else if (fileType === 'application/pdf') {
+    const pdfData = await pdfParse(file.buffer);
+    extractedText = pdfData.text;
+  } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    // Handle DOCX files
+    const mammothResult = await mammoth.extractRawText({ buffer: req.file.buffer });
+    extractedText = mammothResult.value;
+  } else if (fileType === 'application/rtf') {
+    extractedText = await extractRTFText(req.file.buffer);
+  } else {
+    extractedText = 'Unsupported file type';
+  }
+
+  const documentPrompt = "In order to build a course from a document, extract relevant topics and other " + 
+    `useful information about the course. Be concise. The course name is ${courseName} Here is the document: ${extractedText}`;
+  
+  var documentInformation = "";
+  
+  const documentCompletion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "You are creating intuitive and engaging course content." },
+      {
+          role: "user",
+          content: documentPrompt,
+      }
+    ],
+    n: 1,
+    response_format: {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "response_schema",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "topics": {
+              "type": "array",
+              "description": "An array of topics (if any found).",
+              "items": {
+                "type": "string"
+              }
+            },
+            "other_information": {
+              "type": "string",
+            }
+          },
+          "additionalProperties": false,
+        }
+      }
+    }
+  });
+
+  documentInformation = JSON.parse(documentCompletion.choices[0].message.content);
+  return documentInformation;
+}
+
 /* POST follow-up questions after sending user inputs. */
 router.post('/follow_ups', upload.single('file'), async function(req, res, next) {
 
+  var documentInformation = undefined;
   if(req.file){
-    // parse file text and extract useful info + list of topics
-    const file = req.file;
-    const fileType = req.file.mimetype;
-    var extractedText = "";
-
-    if (fileType === 'text/plain') {
-      extractedText = file.buffer.toString('utf8');
-    } else if (fileType === 'application/pdf') {
-      const pdfData = await pdfParse(file.buffer);
-      extractedText = pdfData.text;
-    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      // Handle DOCX files
-      const mammothResult = await mammoth.extractRawText({ buffer: req.file.buffer });
-      extractedText = mammothResult.value;
-    } else if (fileType === 'application/rtf') {
-      extractedText = await extractRTFText(req.file.buffer);
-    } else {
-      extractedText = 'Unsupported file type';
-    }
-
-    const documentPrompt = "In order to build a course from a document, extract relevant topics and other " + 
-      `useful information about the course. Be concise. The course name is ${req.body.courseName} Here is the document: ${extractedText}`;
-    
-    var documentInformation = "";
-    
-    const documentCompletion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are creating intuitive and engaging course content." },
-        {
-            role: "user",
-            content: documentPrompt,
-        }
-      ],
-      n: 1,
-      response_format: {
-        "type": "json_schema",
-        "json_schema": {
-          "name": "response_schema",
-          "schema": {
-            "type": "object",
-            "properties": {
-              "topics": {
-                "type": "array",
-                "description": "An array of topics (if any found).",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "other_information": {
-                "type": "string",
-              }
-            },
-            "additionalProperties": false,
-          }
-        }
-      }
-    });
-
-    documentInformation = JSON.parse(documentCompletion.choices[0].message.content);
+    documentInformation = await ExtractDocumentInsights(req.file, req.body.courseName);
   }
 
   var emptyFields = [];
@@ -116,14 +121,11 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
     "Other Requests": req.body.otherRequests,
   }
 
-  console.log(req.body.useProfile);
-
   // if use Profile is true, add profile information to fields
   if(req.body.useProfile === 'true'){
     // fetch profile from MongoDB
     try{  
       const userCollection = req.db.collection("Users");
-      console.log("LOL");
       
       const userRecord = await userCollection.findOne({ email: req.body.email });
       if(userRecord){
@@ -181,8 +183,45 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
     }
   }
 
-  // prompt fields for activities that need to be integrated into timeline (images/diagrams)
-  // or we could insert after the main content is generated.
+  const features = JSON.parse(req.body.features);
+  const featureExtensions = JSON.parse(req.body.featureExtensions);
+
+  const featurePrompts = {
+    "Guided Examples": "Include guided examples to reinforce concepts.",
+    "Practice Problems": "Include practice problem assignments to assess understanding.",
+    "Flash Cards": "Include flash cards to reinforce learning.",
+    "Learning Games": "Include learning games to reinforce learning.",
+    "Simulations": "Include simulations to reinforce learning.",
+    "Videos": "Include videos to reinforce learning.",
+    "External Links": "Include external links to provide additional resources.",
+    "Narrated Slides": "Include narrated slides on each page to present content.",
+    "Images and Diagrams": "Include images and diagrams to help explain content.",
+  }
+
+  function extensionPrompts(feature){
+    console.log(feature);
+    if(feature == "Narrated Slides" || feature == "Images and Diagrams"){
+      return "";
+    }
+    var extensionPrompt = `The user wants a frequency of ${featureExtensions[feature][`How often should ${feature.toLowerCase()} be given?`]["value"]}. `;
+    if(featureExtensions[feature]["Additional Comments (Length, Difficulty, Format, etc.)"]["value"] != ""){
+      extensionPrompt += `Also consider the following: ${featureExtensions[feature]["Additional Comments (Length, Difficulty, Format, etc.)"]["value"]}. `;
+    }
+    return extensionPrompt;
+  }
+
+  const extensions = {};
+
+  for(const feature in features){
+    if(features[feature] === true){
+      extensions[feature] = `${featurePrompts[feature]} ${extensionPrompts(feature)}`; 
+    }
+  }
+
+  console.log(extensions);
+
+  // second pass- modify outline to insert extensions in outline, will be taken into consideration during generation
+  // or separate second auxiliary outline- add extensions one at a time.
     
   prompt += `These request fields are empty: ${emptyFields} What follow-up questions would you ask to generate a personalized course? ` +
     `Only generate insightful questions, and try to generate as few as possible. ` +
