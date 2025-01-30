@@ -6,6 +6,8 @@ import axios from "axios";
 
 export default function CourseHomePage({data, courseId, session}){
 
+    const [resultDisplay, setResultDisplay] = useState();
+
     const [contentOpen, setContentOpen] = useState(false);
     const [selectedOption, setSelectedOption] = useState("content");
     const [selectedTopic, setSelectedTopic] = useState(0);
@@ -13,15 +15,21 @@ export default function CourseHomePage({data, courseId, session}){
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [deleteResult, setDeleteResult] = useState();
 
+    const [showRenamePrompt, setShowRenamePrompt] = useState(false);
+    const [newCourseName, setNewCourseName] = useState('');
+
     const [regenerateRequests, setRegenerateRequests] = useState('');
     const [showRegenerateCourse, setShowRegenerateCourse] = useState(false);
-    const [regenerateResult, setRegenerateResult] = useState();
     const [regenerateLoading, setRegenerateLoading] = useState(false);
 
-    const courseName = data.course_name;
+    const [courseName, setCourseName] = useState(data.course_name);
     const [courseDescription, setCourseDescription] = useState(data.course_description);
 
     const [topics, setTopics] = useState(data.course_outline);
+
+    const [showAddPage, setShowAddPage] = useState(false);
+    const [newPageName, setNewPageName] = useState('');
+    const [addPageResult, setAddPageResult] = useState();
 
     const handleDeleteCourse = async () => {
         const { data } = await axios.delete("http://localhost:3001/delete_course", {
@@ -34,6 +42,29 @@ export default function CourseHomePage({data, courseId, session}){
         setShowDeleteConfirmation(false);
         setDeleteResult(data.status);
     };
+
+    const handleRenameCourse = async () => {
+        if(newCourseName.length == 0){
+            return;
+        }
+        axios.patch("http://localhost:3001/rename_course", {
+            courseId: courseId,
+            email: session.user.email,
+            newCourseName: newCourseName
+        })
+        .then(response => {
+            console.log(response.data);
+            if(response.data.status == 'Success'){
+                setCourseName(newCourseName);
+            }
+            setShowRenamePrompt(false);
+            setNewCourseName('');
+            setResultDisplay(response.data.status == "Success" ? "Successfully renamed course!" : "Error renaming course");
+        })
+        .catch(error => {
+            console.log(error);
+        })
+    }
 
     const handleRegenerateRequestsChange = (event) => {
         setRegenerateRequests(event.target.value);
@@ -48,7 +79,7 @@ export default function CourseHomePage({data, courseId, session}){
             newRequest: regenerateRequests,
         })
         setShowRegenerateCourse(false);
-        setRegenerateResult(data.status);
+        setResultDisplay(data.status == "Success" ? "Successfully regenerated course" : "Error rewriting course");
         setRegenerateLoading(false);
         
         // refetch data, change desc and topics to state
@@ -61,6 +92,10 @@ export default function CourseHomePage({data, courseId, session}){
         setCourseDescription(data.course_description);
     };
 
+    const handleAddPage = async () => {
+
+    }
+
     const grades = {
         1: { assignment: 'Rizz practical', weight: 10, grade: 89 },
         2: { assignment: 'Rizz final exam', weight: 30, grade: 76 },
@@ -69,6 +104,55 @@ export default function CourseHomePage({data, courseId, session}){
     }
 
     function DisplayTopic(){
+
+        const [deleteMode, setDeleteMode] = useState(false);
+        const [deleteList, setDeleteList] = useState([]);
+
+        const handleDeletePages = async () => {
+            if(deleteList.length == 0){
+                setDeleteMode(false);
+                return;
+            }
+            const { data } = await axios.delete("http://localhost:3001/delete_pages", {
+                params: {
+                    courseId: courseId,
+                    topicIndex: selectedTopic,
+                    deletedPages: deleteList
+                }
+            })
+            console.log(data)
+            if(data.status == 'Success'){
+                topics[selectedTopic].subtopics = topics[selectedTopic].subtopics.filter((_, index) => !deleteList.includes(index));
+            }
+            setDeleteMode(false);
+            setDeleteList([]);
+            setResultDisplay(data.status == "Success" ? "Successfully deleted pages!" : "Error deleting pages");
+        }
+
+        if(deleteMode){
+            return(
+                <div>
+                    <div className="mb-4">
+                        <Link className="text-2xl font-semibold" href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic.topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: -1 } }}>{topics[selectedTopic].topic.topic}</Link>
+                    </div>
+                    {topics[selectedTopic].subtopics.map((_, id) => (
+                        <div key={id} className="flex items-center space-x-2 p-2">
+                            <input type="checkbox" onChange={(e) => {e.target.checked ? setDeleteList((prev) => [...prev, id]) : setDeleteList((prev) => prev.filter((item) => item !== id))}}/>
+                            <Link href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic.topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: id } }}>{topics[selectedTopic].subtopics[id].subtopic.subtopic}</Link>
+                        </div>
+                    ))}
+                    <div className="flex justify-center space-x-3 mt-10">
+                        <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg w-36" onClick={handleDeletePages}>
+                            Confirm
+                        </button>
+                        <button className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 w-36" onClick={() => {setDeleteMode(false); setDeleteList([])}}>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
         return(
             <div>
                 <div className="mb-4">
@@ -82,6 +166,14 @@ export default function CourseHomePage({data, courseId, session}){
                         <Link href={{ pathname: `/Course/${courseName}/${topics[selectedTopic].topic.topic}`, query: { course_id: courseId, topic: selectedTopic, subtopic: id } }}>{topics[selectedTopic].subtopics[id].subtopic.subtopic}</Link>
                     </div>
                 ))}
+                <div className="flex justify-center space-x-3 mt-10">
+                    <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-36" onClick={() => {setShowAddPage(true)}}>
+                        Add Page
+                    </button>
+                    <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg w-36" onClick={() => {setDeleteMode(true)}}>
+                        Delete Pages
+                    </button>
+                </div>
             </div>
         );
     }
@@ -166,19 +258,28 @@ export default function CourseHomePage({data, courseId, session}){
         return(
             <div>
                 <h1 className="text-2xl font-semibold mb-4">Course Settings</h1>
-                <div>
-                    <button className="mb-4 bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-2 rounded-lg"
-                    onClick={() => {setShowRegenerateCourse(true)}}
-                    >
-                        Regenerate Course
-                    </button>
-                </div>
-                <div>
-                    <button className="bg-red-500 hover:bg-red-600 p-2 rounded-lg"
-                    onClick={() => {setShowDeleteConfirmation(true)}}
-                    >
-                        Delete Course
-                    </button>
+                <div className="space-y-4">
+                    <div>
+                        <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-2 rounded-lg"
+                        onClick={() => {setShowRegenerateCourse(true)}}
+                        >
+                            Regenerate Course
+                        </button>
+                    </div>
+                    <div>
+                        <button className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] p-2 rounded-lg"
+                        onClick={() => {setShowRenamePrompt(true)}}
+                        >
+                            Rename Course
+                        </button>
+                    </div>
+                    <div>
+                        <button className="bg-red-500 hover:bg-red-600 p-2 rounded-lg"
+                        onClick={() => {setShowDeleteConfirmation(true)}}
+                        >
+                            Delete Course
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -246,6 +347,32 @@ export default function CourseHomePage({data, courseId, session}){
                 </div>
             )}
 
+            {showRenamePrompt && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-1/4">
+                    <p className="text-lg mb-2 text-center">New Course Name:</p>
+                    <input className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2 mb-4"
+                        value={newCourseName}
+                        onChange={(e) => {setNewCourseName(e.target.value)}}
+                    />
+                    <div className="flex justify-between">
+                    <button
+                        className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg w-24"
+                        onClick={handleRenameCourse}
+                    >
+                        Confirm
+                    </button>
+                    <button
+                        className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
+                        onClick={() => {setShowRenamePrompt(false); setNewCourseName('')}}
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </div>
+                </div>
+            )}
+
             {showRegenerateCourse && (
                 <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
                 <div className="bg-white rounded-lg p-6 w-100">
@@ -280,6 +407,32 @@ export default function CourseHomePage({data, courseId, session}){
                 </div>
             )}
 
+            {showAddPage && (
+                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-1/4">
+                    <p className="text-lg mb-2 text-center">New Page Name:</p>
+                    <input className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2 mb-4"
+                        value={newPageName}
+                        onChange={(e) => {setNewPageName(e.target.value)}}
+                    />
+                    <div className="flex justify-between">
+                    <button
+                        className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg w-24"
+                        onClick={handleAddPage}
+                    >
+                        Confirm
+                    </button>
+                    <button
+                        className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
+                        onClick={() => {setShowAddPage(false); setNewPageName('')}}
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </div>
+                </div>
+            )}
+
             {deleteResult && (
                 <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
                 <div className="bg-white rounded-lg p-6 w-80 items-center flex flex-col">
@@ -300,12 +453,12 @@ export default function CourseHomePage({data, courseId, session}){
                 </div>
             )}
 
-            {regenerateResult && (
+            {resultDisplay && (
                 <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
                 <div className="bg-white rounded-lg p-6 w-80 items-center flex flex-col">
-                    <p className="text-lg mb-4 text-center">{regenerateResult == "Success" ? "Successfully regenerated course" : "Error rewriting course"}</p>
+                    <p className="text-lg mb-4 text-center">{resultDisplay}</p>
                     <button className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition"
-                    onClick={() => {setRegenerateResult()}}
+                    onClick={() => {setResultDisplay()}}
                     >
                         Close
                     </button>
