@@ -10,6 +10,8 @@ export default function BuildCourse(){
     const [status, setStatus] = useState("Initial");
     const [followUpQs, setFollowUpQs] = useState([]);
     const [prompt, setPrompt] = useState({});
+    const [internalExtensions, setInternalExtensions] = useState({});
+    const [externalExtensions, setExternalExtensions] = useState({});
     const [generateStatus, setGenerateStatus] = useState("");
     const { data: session } = useSession();
     const [isChecked, setIsChecked] = useState(false);
@@ -53,11 +55,11 @@ export default function BuildCourse(){
                 "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},
             },
             "Flash Cards": {
-                "How often should flash cards be provided?": {type: "buttons", options: ["Each Page", "End of Unit", "No Preference"], value: "No Preference"},
+                "How often should flash cards be given?": {type: "buttons", options: ["Each Page", "End of Unit", "No Preference"], value: "No Preference"},
                 "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},         
             },
             "Learning Games": {
-                "How often should practice problems be given?": {type: "buttons", options: ["Between Pages", "End of Unit", "No Preference"], value: "No Preference"},
+                "How often should learning games be given?": {type: "buttons", options: ["Between Pages", "End of Unit", "No Preference"], value: "No Preference"},
                 "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},
             },
             "Simulations": {
@@ -66,11 +68,11 @@ export default function BuildCourse(){
             },
             "Videos": {
                 "How often should videos be given?": {type: "buttons", options: ["Each Page", "Between Pages", "End of Unit", "No Preference"], value: "No Preference"},
-                "Additional Comments (Purpose, Content, etc.)": {type: "text", value: ""},
+                "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},
             },
             "External Links": {
                 "How often external links be given?": {type: "buttons", options: ["Each Page", "End of Unit", "No Preference"], value: "No Preference"},
-                "Additional Comments (Purpose, Content, etc.)": {type: "text", value: ""},
+                "Additional Comments (Length, Difficulty, Format, etc.)": {type: "text", value: ""},
             },
         }
     });
@@ -181,6 +183,8 @@ export default function BuildCourse(){
             console.log(response.data);
             setPrompt(response.data.prompt);
             setFollowUpQs(response.data.response);
+            setInternalExtensions(response.data.internalExtensions);
+            setExternalExtensions(response.data.externalExtensions);
             setStatus("Follow-Up");
             setLoading(false);
         })
@@ -498,6 +502,8 @@ export default function BuildCourse(){
             courseName: formState.courseName,
             email: session.user.email,
             name: session.user.name,
+            internalExtensions: internalExtensions,
+            externalExtensions: externalExtensions,
         })
         .then(response => {
             setStatus("Done");

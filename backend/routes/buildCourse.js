@@ -210,18 +210,31 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
     return extensionPrompt;
   }
 
-  const extensions = {};
+  const internalExtensions = {}; // added within existing pages
+  const externalExtensions = {}; // added on to new pages
+  const internalFrequencies = ["No Preference", "Each Page"];
+  const externalFrequencies = ["No Preference", "End of Unit", "Between Pages"];
 
   for(const feature in features){
     if(features[feature] === true){
-      extensions[feature] = `${featurePrompts[feature]} ${extensionPrompts(feature)}`; 
+      // slides and images/diagrams are always internal
+      if(feature == "Narrated Slides" || feature == "Images and Diagrams"){
+        internalExtensions[feature] = `${featurePrompts[feature]} ${extensionPrompts(feature)}`;
+      }
+      else{
+        // Each page is internal, between pages and end of unit is external, no preference is both
+        if(internalFrequencies.includes(featureExtensions[feature][`How often should ${feature.toLowerCase()} be given?`]["value"])){
+          internalExtensions[feature] = `${featurePrompts[feature]} ${extensionPrompts(feature)}`;
+        }
+        if(externalFrequencies.includes(featureExtensions[feature][`How often should ${feature.toLowerCase()} be given?`]["value"])){
+          externalExtensions[feature] = `${featurePrompts[feature]} ${extensionPrompts(feature)}`;
+        }
+      }
     }
   }
 
-  console.log(extensions);
-
-  // second pass- modify outline to insert extensions in outline, will be taken into consideration during generation
-  // or separate second auxiliary outline- add extensions one at a time.
+  console.log(internalExtensions);
+  console.log(externalExtensions);
     
   prompt += `These request fields are empty: ${emptyFields} What follow-up questions would you ask to generate a personalized course? ` +
     `Only generate insightful questions, and try to generate as few as possible. ` +
@@ -260,7 +273,7 @@ router.post('/follow_ups', upload.single('file'), async function(req, res, next)
   });
 
   const response = JSON.parse(completion.choices[0].message.content);
-  res.json( {prompt: promptFields, response: response["questions"]} );
+  res.json( {prompt: promptFields, response: response["questions"], internalExtensions: internalExtensions, externalExtensions: externalExtensions} );
 });
 
 async function BasicOutline(basicPrompt, courseName){
@@ -396,6 +409,103 @@ async function DetailedOutline(basicPrompt, courseName){
   return outline;
 }
 
+async function ExtensionsOutline(outline, internalExtensions, externalExtensions, basicPrompt){
+  var extensionsOutline = outline.outline;
+  // All pages up to this point are content pages
+  for (let i = 0; i < extensionsOutline.length; i++) {
+    for (let j = 0; j < extensionsOutline[i].subtopics.length; j++) {
+      extensionsOutline[i].subtopics[j].subtopic_type = "Content";
+    }
+  }
+
+  console.log(extensionsOutline[0]);
+
+  outline.outline = extensionsOutline;
+
+  // add external extensions (not in content pages)
+  var externalTypes = Object.keys(externalExtensions);
+  externalTypes.push("Content");
+
+  var externalPrompt = "You are adding extensions to a course outline to reinforce content. The content outline consists of topics (units) and subtopics (pages) and is " + 
+  `provided here: ${JSON.stringify(outline)}. The extensions and specifications for each one are provided: ${JSON.stringify(externalExtensions)}. Your job is to add subtopics to topics in the outline considering ` + 
+  `the extension specifications and overall course specifications. Course specifications are provided here: ${basicPrompt}. For each new subtopic, you will include ` + 
+  `the type of extension and a description of what to include and what subtopics are reinforced. Strictly follow user specifications for each extension frequency.` + 
+  `Do not change what is already in the outline- you are just adding to it.`;
+
+  console.log(externalPrompt);
+
+  const externalCompletion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+        { role: "system", content: "You are adding extensions to a course outline while considering effective placement." },
+        {
+            role: "user",
+            content: externalPrompt,
+        }
+    ],
+    n: 1,
+    response_format: {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "response_schema",
+        "schema": {
+          "type": "object",
+            "properties": {
+              "course_description": {
+                "type": "string",
+                "description": "one sentence description of the course",
+              },
+              "outline": {
+                  "type": "array",
+                  "items": {
+                      "type": "object",
+                      "properties": {
+                          "topic": { "type": "string" },
+                          "subtopics": {
+                              "type": "array",
+                              "items": { 
+                                "type": "object",
+                                "properties": {
+                                  "subtopic": { "type": "string" },
+                                  "discussion_points": { 
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                  },
+                                  "suptopic_type": {
+                                    "type": "string",
+                                    "enum": externalTypes,
+                                  }
+                                },
+                                "required": ["subtopic", "discussion_points"]
+                              }
+                          }
+                      },
+                      "required": ["topic", "subtopics"]
+                  }
+              }
+            },
+            required: ["course_description", "outline"],
+          "additionalProperties": false,
+        }
+      }
+    }
+  });
+
+  outline = JSON.parse(externalCompletion.choices[0].message.content);
+  
+  // add internal (integrated into content pages)
+  var internalPrompt = "You are adding extensions to a course outline to reinforce content. The content outline consists of topics (units) and subtopics (pages) and is " + 
+  `provided here: ${outline}. The extensions and specifications for each one are provided: ${internalExtensions}. Your job is to integrate extensions into subtopics in the outline considering ` + 
+  `the extension specifications and overall course specifications. Course specifications are provided here: ${basicPrompt}. For each new subtopic, you will include ` + 
+  `the type of extension and a description of what to include and what subtopics are reinforced. Strictly follow user specifications for each extension frequency.` + 
+  `Do not add any more pages- only modify what is already present.`;
+
+  // API prompt to modify pages by nesting types
+
+  // Modify content prompts to only cover content, no examples
+  return outline;
+}
+
 /* POST create course and topics list. */
 router.post('/create_course', async function(req, res, next) {
   console.log(req.body);
@@ -403,6 +513,8 @@ router.post('/create_course', async function(req, res, next) {
   const email = req.body.email;
   const name = req.body.name;
   const courseName = req.body.courseName;
+  const internalExtensions = req.body.internalExtensions;
+  const externalExtensions = req.body.externalExtensions;
 
   // filter out questions with response
   const filteredQuestions = Object.fromEntries(
@@ -513,6 +625,10 @@ router.post('/create_course', async function(req, res, next) {
     }
   }
 
+  // Test to see if works
+  outline = await ExtensionsOutline(outline, internalExtensions, externalExtensions, basicPrompt);
+  console.log(outline);
+  
   var content = [];
 
   for(const unit of outline.outline){
