@@ -494,13 +494,85 @@ async function ExtensionsOutline(outline, internalExtensions, externalExtensions
   outline = JSON.parse(externalCompletion.choices[0].message.content);
   
   // add internal (integrated into content pages)
-  var internalPrompt = "You are adding extensions to a course outline to reinforce content. The content outline consists of topics (units) and subtopics (pages) and is " + 
-  `provided here: ${outline}. The extensions and specifications for each one are provided: ${internalExtensions}. Your job is to integrate extensions into subtopics in the outline considering ` + 
-  `the extension specifications and overall course specifications. Course specifications are provided here: ${basicPrompt}. For each new subtopic, you will include ` + 
-  `the type of extension and a description of what to include and what subtopics are reinforced. Strictly follow user specifications for each extension frequency.` + 
-  `Do not add any more pages- only modify what is already present.`;
+  var internalTypes = Object.keys(internalExtensions);
 
-  // API prompt to modify pages by nesting types
+  var internalPrompt = "You are adding extensions to a course outline to reinforce content. The content outline consists of topics (units) and subtopics (pages) and is " + 
+  `provided here: ${JSON.stringify(outline)}. The extensions and specifications for each one are provided: ${JSON.stringify(internalExtensions)}. Your job is to integrate extensions into subtopics in the outline considering ` + 
+  `the extension specifications and overall course specifications. Course specifications are provided here: ${basicPrompt}. For each subtopic, you will include ` + 
+  `the type of extension and a description of what to include in the extensions array field. Strictly follow user specifications for each extension frequency.` + 
+  `Do not add any more pages or modify what is already present- only add to the extensions arrays`;
+
+  const internalCompletion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+        { role: "system", content: "You are adding extensions to a course outline while considering effective placement." },
+        {
+            role: "user",
+            content: internalPrompt,
+        }
+    ],
+    n: 1,
+    response_format: {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "response_schema",
+        "schema": {
+          "type": "object",
+            "properties": {
+              "course_description": {
+                "type": "string",
+                "description": "one sentence description of the course",
+              },
+              "outline": {
+                  "type": "array",
+                  "items": {
+                      "type": "object",
+                      "properties": {
+                          "topic": { "type": "string" },
+                          "subtopics": {
+                              "type": "array",
+                              "items": { 
+                                "type": "object",
+                                "properties": {
+                                  "subtopic": { "type": "string" },
+                                  "discussion_points": { 
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                  },
+                                  "suptopic_type": {
+                                    "type": "string",
+                                    "enum": externalTypes,
+                                  },
+                                  "extensions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "extension_type": {
+                                          "type": "string",
+                                          "enum": internalTypes,
+                                        },
+                                        "description": {"type": "string"},
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": ["subtopic", "discussion_points"]
+                              }
+                          }
+                      },
+                      "required": ["topic", "subtopics"]
+                  }
+              }
+            },
+            required: ["course_description", "outline"],
+          "additionalProperties": false,
+        }
+      }
+    }
+  });
+
+  outline = JSON.parse(internalCompletion.choices[0].message.content);
 
   // Modify content prompts to only cover content, no examples
   return outline;
