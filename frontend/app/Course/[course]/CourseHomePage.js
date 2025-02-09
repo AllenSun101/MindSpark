@@ -27,8 +27,6 @@ export default function CourseHomePage({data, courseId, session}){
 
     const [topics, setTopics] = useState(data.course_outline);
 
-    const [addPageResult, setAddPageResult] = useState();
-
     const handleDeleteCourse = async () => {
         const { data } = await axios.delete("http://localhost:3001/delete_course", {
             params: {
@@ -83,6 +81,7 @@ export default function CourseHomePage({data, courseId, session}){
         // refetch data, change desc and topics to state
         var { data } = await axios.get("http://localhost:3001/get_outline", {
             params: {
+                email: session.user.email,
                 courseId: courseId
             }
         })
@@ -122,16 +121,25 @@ export default function CourseHomePage({data, courseId, session}){
                 setAddMode(false);
                 setResultDisplay(data.status == "Success" ? "Successfully generated page" : "Error generating page");
                 setGenerateLoading(false);
-                
-                // refetch data, change desc and topics to state
-                var { data } = await axios.get("http://localhost:3001/get_outline", {
-                    params: {
-                        courseId: courseId
-                    }
-                })
-                setTopics(data.course_outline);
-                setCourseDescription(data.course_description);
             }
+            else{
+                var { data } = await axios.post("http://localhost:3001/add_page", {
+                    courseId: courseId,
+                    pageName: newPageName,
+                    topic: selectedTopic,
+                })
+                setAddMode(false);
+                setResultDisplay(data.status == "Success" ? "Successfully added page" : "Error adding page");
+            }
+
+            // Update subtopic display
+            var { data } = await axios.get("http://localhost:3001/get_outline", {
+                params: {
+                    email: session.user.email,
+                    courseId: courseId
+                }
+            })
+            setTopics(data.course_outline);
         }
 
         const handleDeletePages = async () => {
@@ -158,7 +166,7 @@ export default function CourseHomePage({data, courseId, session}){
         if(addMode){
             if(generateLoading){
                 return(
-                    <p>Currently generating page, please be patient</p>
+                    <p className="text-center mt-32">Currently generating page, please be patient</p>
                 );
             }
             return(

@@ -349,4 +349,51 @@ router.delete('/delete_pages', async function(req, res, next) {
   res.json( {status: status} );
 });
 
+router.post('/add_page', async function(req, res, next) {
+  const pageName = req.body.pageName;
+  const courseId = req.body.courseId;
+  const topic = req.body.topic;
+
+  const newPage = {
+    subtopic_name: pageName,
+    subtopic_content: ""
+  };
+
+  const newPageOutline = {
+    subtopic: {
+      subtopic: pageName,
+      discussion_points: []
+    },
+    status: "incomplete"
+  };
+
+  var status = "Success";
+  
+  try{
+    const collection = req.db.collection("Courses");
+
+    const filter = { _id: ObjectId.createFromHexString(courseId)};
+
+    var update = { 
+      $push: { 
+          [`course_content.${topic}.subtopics`]: newPage,
+          [`course_outline.outline.${topic}.subtopics`]: newPageOutline
+      } 
+    };
+
+    const updateResult = await collection.updateOne(
+      filter,
+      update      
+    );
+    
+    console.log('Document updated');
+  }
+  catch(error){
+    console.error('Error updating document:', error);
+    status = "Fail";
+  }
+
+  res.json( {"status": status} );
+})
+
 module.exports = router;

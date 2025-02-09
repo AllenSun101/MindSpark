@@ -904,9 +904,43 @@ router.post('/generate_page', async function(req, res, next) {
   const courseId = req.body.courseId;
   const topic = req.body.topic;
 
-  var prompt = `Generate content for the page: ${pageName}. Take into consideration the following requests: ${contentRequest}` + 
-  "For equations, use Latex " + 
-  "and wrap inline formulas with $ and block formulas with $$.";
+  var discussionPrompt = `Generate at least 3-4 brief and general topics for the page: ${pageName}. 
+  Each topic should be concise, preferably just a few words (e.g., "Definition of permutations", "Formula for combinations"). 
+  Avoid full sentences or detailed explanations—just provide short topic phrases. 
+  Consider the following requests: ${contentRequest}.`;
+
+
+  const discussionCompletion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "You are generating insightful subtopics for a course page." },
+      { role: "user", content: discussionPrompt }
+    ],
+    n: 1,
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "discussion_schema",
+        schema: {
+          type: "object",
+          properties: {
+            discussionPoints: {
+              type: "array",
+              items: { type: "string" }
+            }
+          },
+          additionalProperties: false
+        }
+      }
+    }
+  });
+
+  const discussionPoints = JSON.parse(discussionCompletion.choices[0].message.content).discussionPoints || [];
+  console.log(discussionPoints)
+
+  var prompt = `Generate content for the page: ${pageName} based on the following discussion points: ${discussionPoints.join("\n")}
+  Take into consideration the following requests: ${contentRequest}. Do not include a header for the page.
+  For equations, use LaTeX and wrap inline formulas with $ and block formulas with $$.`;
   
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -940,7 +974,8 @@ router.post('/generate_page', async function(req, res, next) {
 
   const newPageOutline = {
     subtopic: {
-      subtopic: pageName
+      subtopic: pageName,
+      discussion_points: discussionPoints
     },
     status: "incomplete"
   };

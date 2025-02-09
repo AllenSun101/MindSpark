@@ -215,6 +215,8 @@ export default function CourseContent({data, courseId, topicIndex, subtopicIndex
                 </div>
                 <div className="min-h-[20vh] mx-8">
                     <Markdown className="space-y-4" remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={{
+                        h1: ({ children }) => <h1 className="font-bold text-lg">{children}</h1>,
+                        h2: ({ children }) => <h2 className="font-semibold text-lg">{children}</h2>,
                         h3: ({ children }) => <h3 className="font-semibold">{children}</h3>,
                         ul: ({ children }) => <ul className="list-disc pl-6 space-y-4">{children}</ul>,
                         ol: ({ children }) => <ol className="list-decimal pl-6 space-y-4">{children}</ol>,
