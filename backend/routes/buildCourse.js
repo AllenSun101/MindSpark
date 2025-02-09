@@ -898,6 +898,84 @@ router.post('/regenerate_page', async function(req, res, next) {
     res.json( {"status": status} );
 })
 
+router.post('/generate_page', async function(req, res, next) {
+  const contentRequest = req.body.contentRequest;
+  const pageName = req.body.pageName;
+  const courseId = req.body.courseId;
+  const topic = req.body.topic;
+
+  var prompt = `Generate content for the page: ${pageName}. Take into consideration the following requests: ${contentRequest}` + 
+  "For equations, use Latex " + 
+  "and wrap inline formulas with $ and block formulas with $$.";
+  
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+        { role: "system", content: "You are creating intuitive and engaging course content." },
+        {
+            role: "user",
+            content: prompt,
+        }
+    ],
+    n: 1,
+    response_format: {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "response_schema",
+        "schema": {
+          "type": "object",
+            "properties": {
+              "page": {"type": "string"},
+            },
+          "additionalProperties": false,
+        }
+      }
+    }
+  });
+
+  const newPage = {
+    subtopic_name: pageName,
+    subtopic_content: JSON.parse(completion.choices[0].message.content).page
+  };
+
+  const newPageOutline = {
+    subtopic: {
+      subtopic: pageName
+    },
+    status: "incomplete"
+  };
+
+  console.log(newPage);
+
+  var status = "Success";
+  
+  try{
+    const collection = req.db.collection("Courses");
+
+    const filter = { _id: ObjectId.createFromHexString(courseId)};
+
+    var update = { 
+      $push: { 
+          [`course_content.${topic}.subtopics`]: newPage,
+          [`course_outline.outline.${topic}.subtopics`]: newPageOutline
+      } 
+    };
+
+    const updateResult = await collection.updateOne(
+      filter,
+      update      
+    );
+    
+    console.log('Document updated');
+  }
+  catch(error){
+    console.error('Error updating document:', error);
+    status = "Fail";
+  }
+
+  res.json( {"status": status} );
+})
+
 router.post('/regenerate_course', async function(req, res, next) {
     console.log(req.body);
     const newRequest = req.body.newRequest;

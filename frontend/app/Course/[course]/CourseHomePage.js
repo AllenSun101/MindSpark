@@ -27,8 +27,6 @@ export default function CourseHomePage({data, courseId, session}){
 
     const [topics, setTopics] = useState(data.course_outline);
 
-    const [showAddPage, setShowAddPage] = useState(false);
-    const [newPageName, setNewPageName] = useState('');
     const [addPageResult, setAddPageResult] = useState();
 
     const handleDeleteCourse = async () => {
@@ -92,10 +90,6 @@ export default function CourseHomePage({data, courseId, session}){
         setCourseDescription(data.course_description);
     };
 
-    const handleAddPage = async () => {
-
-    }
-
     const grades = {
         1: { assignment: 'Rizz practical', weight: 10, grade: 89 },
         2: { assignment: 'Rizz final exam', weight: 30, grade: 76 },
@@ -105,8 +99,40 @@ export default function CourseHomePage({data, courseId, session}){
 
     function DisplayTopic(){
 
+        const [addMode, setAddMode] = useState(false);
+        const [newPageName, setNewPageName] = useState('');
+        const [generateContent, setGenerateContent] = useState(false);
+        const [contentRequests, setContentRequests] = useState("");
+        const [generateLoading, setGenerateLoading] = useState(false);
+
         const [deleteMode, setDeleteMode] = useState(false);
         const [deleteList, setDeleteList] = useState([]);
+
+        const handleAddPage = async (event) => {
+            event.preventDefault();
+
+            if(generateContent){
+                setGenerateLoading(true);
+                var { data } = await axios.post("http://localhost:3001/buildCourse/generate_page", {
+                    contentRequest: contentRequests,
+                    courseId: courseId,
+                    pageName: newPageName,
+                    topic: selectedTopic,
+                })
+                setAddMode(false);
+                setResultDisplay(data.status == "Success" ? "Successfully generated page" : "Error generating page");
+                setGenerateLoading(false);
+                
+                // refetch data, change desc and topics to state
+                var { data } = await axios.get("http://localhost:3001/get_outline", {
+                    params: {
+                        courseId: courseId
+                    }
+                })
+                setTopics(data.course_outline);
+                setCourseDescription(data.course_description);
+            }
+        }
 
         const handleDeletePages = async () => {
             if(deleteList.length == 0){
@@ -127,6 +153,82 @@ export default function CourseHomePage({data, courseId, session}){
             setDeleteMode(false);
             setDeleteList([]);
             setResultDisplay(data.status == "Success" ? "Successfully deleted pages!" : "Error deleting pages");
+        }
+
+        if(addMode){
+            if(generateLoading){
+                return(
+                    <p>Currently generating page, please be patient</p>
+                );
+            }
+            return(
+                <form onSubmit={handleAddPage}>
+                    <h1 className="text-2xl text-center mb-6">New Page</h1>
+                    <div className="flex mb-6 items-center">
+                        <label className="mr-4 whitespace-nowrap">Page Name: </label>
+                        <input type="text" className="border border-gray-900 w-1/2 max-w-xl py-1 px-2 rounded-lg border-2" 
+                            name="pageName" 
+                            required
+                            value={newPageName}
+                            onChange={(e) => {setNewPageName(e.target.value)}}>
+                        </input>
+                    </div>
+
+                    <div className="flex space-x-4 items-center mb-8">
+                        <span>Generate content for new page</span>
+                        <label className="relative inline-flex cursor-pointer items-center">
+                            <input
+                                id="switch"
+                                type="checkbox"
+                                className="peer sr-only"
+                                checked={generateContent}
+                                name="generateContent"
+                                onChange={() => {setGenerateContent(!generateContent)}}
+                            />
+                            <div className="relative h-6 w-11 rounded-full border bg-slate-200 peer-checked:bg-gradient-to-r peer-checked:from-[#d7acfc] peer-checked:to-[#7fc3fa]">
+                                <div
+                                    className={`absolute top-1/2 left-0 transform -translate-y-1/2 transition-transform duration-200 ease-in-out h-5 w-5 rounded-full border border-gray-300 bg-white ${
+                                        generateContent ? "translate-x-[1.375rem]" : "translate-x-0"
+                                    }`}
+                                ></div>
+                            </div>
+                        </label>
+                    </div>
+
+
+                    {generateContent && (
+                        <div>
+                            <div className="flex mb-2">
+                                <label>Generation Requests</label>
+                            </div>
+                            <div className="flex mb-6">
+                                <textarea className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2" 
+                                    name="otherRequests" 
+                                    rows="3"
+                                    value={contentRequests}
+                                    onChange={(e) => {setContentRequests(e.target.value)}}>
+                                </textarea>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex justify-between mt-12">
+                        <button
+                            type="submit"
+                            className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg w-24"
+                        >
+                            Confirm
+                        </button>
+                        <button
+                            type="button"
+                            className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
+                            onClick={() => {setAddMode(false); setNewPageName(""); setContentRequests("")}}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            );
         }
 
         if(deleteMode){
@@ -167,7 +269,7 @@ export default function CourseHomePage({data, courseId, session}){
                     </div>
                 ))}
                 <div className="flex justify-center space-x-3 mt-10">
-                    <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-36" onClick={() => {setShowAddPage(true)}}>
+                    <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-36" onClick={() => {setAddMode(true)}}>
                         Add Page
                     </button>
                     <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg w-36" onClick={() => {setDeleteMode(true)}}>
@@ -402,32 +504,6 @@ export default function CourseHomePage({data, courseId, session}){
                         >
                             Cancel
                         </button>
-                    </div>
-                </div>
-                </div>
-            )}
-
-            {showAddPage && (
-                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
-                <div className="bg-white rounded-lg p-6 w-1/4">
-                    <p className="text-lg mb-2 text-center">New Page Name:</p>
-                    <input className="border border-gray-900 w-full py-2 px-2 rounded-lg border-2 mb-4"
-                        value={newPageName}
-                        onChange={(e) => {setNewPageName(e.target.value)}}
-                    />
-                    <div className="flex justify-between">
-                    <button
-                        className="bg-gradient-to-r from-[#f2e6fc] to-[#bce1ff] py-2 px-4 rounded-lg w-24"
-                        onClick={handleAddPage}
-                    >
-                        Confirm
-                    </button>
-                    <button
-                        className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition w-24"
-                        onClick={() => {setShowAddPage(false); setNewPageName('')}}
-                    >
-                        Cancel
-                    </button>
                     </div>
                 </div>
                 </div>
