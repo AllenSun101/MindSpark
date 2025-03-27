@@ -8,6 +8,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var chatbotRouter = require('./routes/chatbot');
 var buildCourseRouter = require('./routes/buildCourse');
+var youtubeRouter = require('./routes/youtube');
 
 var app = express();
 const cors = require('cors');
@@ -62,6 +63,8 @@ app.use('/buildCourse', (req, res, next) => {
   req.db = app.locals.db; // Attach db to req for use in routes
   next();
 }, buildCourseRouter);
+
+app.use('/youtube', youtubeRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
