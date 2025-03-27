@@ -9,6 +9,7 @@ var usersRouter = require('./routes/users');
 var chatbotRouter = require('./routes/chatbot');
 var buildCourseRouter = require('./routes/buildCourse');
 var youtubeRouter = require('./routes/youtube');
+var imageRouter = require('./routes/images');
 
 var app = express();
 const cors = require('cors');
@@ -65,6 +66,7 @@ app.use('/buildCourse', (req, res, next) => {
 }, buildCourseRouter);
 
 app.use('/youtube', youtubeRouter);
+app.use('/image', imageRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
